@@ -45,7 +45,7 @@ function NavBar1() {
           Support
         </Link>
         <Link
-          to="/"
+          to="/login"
           className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium text-lg"
         >
           Sign in

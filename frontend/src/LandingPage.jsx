@@ -4,6 +4,7 @@ import FeaturesComponent from "./components/FeaturesComponent";
 import TimeLine from "./components/TimeLine";
 import NavBar1 from "./components/NavBar1";
 import Footer from "./components/footer.jsx";
+import { DotBackgroundDemo } from "./components/ui/DotBackgroundDemo.jsx";
 
 function LandingPage() {
   return (

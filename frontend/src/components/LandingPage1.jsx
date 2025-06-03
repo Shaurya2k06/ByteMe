@@ -2,6 +2,7 @@ import React from "react";
 import NavBar1 from "./NavBar1";
 import { TypewriterEffectDemo } from "./typewriterEffect";
 import { Link } from "react-router";
+import { DotBackgroundDemo } from "./ui/DotBackgroundDemo";
 
 function LandingPage1() {
   return (
