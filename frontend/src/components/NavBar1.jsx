@@ -1,10 +1,28 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
 
 function NavBar1() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  });
   return (
-    <div className=" flex justify-between p-5">
-      <div className="flex">
+    <div
+      className={`sticky top-0 z-50 flex  justify-between p-5 transition-all h-[79px] duration-300 ${
+        isScrolled
+          ? "shadow-md bg-[#00000099] rounded-md text-white"
+          : "bg-white"
+      }`}
+    >
+      <div className="flex items-center">
         <img
           className="w-[73px] h-[65px] "
           src="../public/navbarLogo.svg"

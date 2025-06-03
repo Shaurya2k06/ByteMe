@@ -6,7 +6,6 @@ import { Link } from "react-router";
 function LandingPage1() {
   return (
     <div className="flex w-full min-h-screen flex-col jusftify-center">
-      <NavBar1 />
       <div className="flex-1 flex-col">
         <div className="flex flex-1  ">
           <div className="w-[60%] flex flex-col p-7">
