@@ -4,6 +4,7 @@ import LandingPage from "./LandingPage.jsx";
 import { TypewriterEffectDemo } from "./components/typewriterEffect.jsx";
 import Login from "./Login.jsx";
 import Signup from "./Signup.jsx";
+import FeaturesComponent from "./components/FeaturesComponent.jsx";
 
 function App() {
   return (

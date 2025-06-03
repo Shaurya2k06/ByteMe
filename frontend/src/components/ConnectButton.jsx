@@ -1,63 +1,63 @@
-import { useState, useRef, useEffect } from "react"
-import { Button } from "./ui/button"
-import { useMetaMask } from "../hooks/useMetamask"
-import { Check, Copy, LogOut } from "lucide-react"
-import { toast } from "sonner"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "./ui/button";
+import { useMetaMask } from "../hooks/useMetamask";
+import { Check, Copy, LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 export function ConnectButton() {
-  const { isConnected, account, connect, disconnect } = useMetaMask()
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const dropdownRef = useRef(null)
+  const { isConnected, account, connect, disconnect } = useMetaMask();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const dropdownRef = useRef(null);
 
   const formatAddress = (address) => {
     return `${address.substring(0, 6)}...${address.substring(
       address.length - 4
-    )}`
-  }
+    )}`;
+  };
 
   const copyToClipboard = () => {
     if (account) {
-      navigator.clipboard.writeText(account)
-      setCopied(true)
-      toast.success("Address copied to clipboard")
-      setTimeout(() => setCopied(false), 2000)
+      navigator.clipboard.writeText(account);
+      setCopied(true);
+      toast.success("Address copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
     }
-  }
+  };
 
   const handleClick = () => {
     if (isConnected) {
-      setShowDropdown(!showDropdown)
+      setShowDropdown(!showDropdown);
     } else {
-      connect()
+      connect();
     }
-  }
+  };
 
   const handleDisconnect = () => {
-    disconnect()
-    setShowDropdown(false)
-  }
+    disconnect();
+    setShowDropdown(false);
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false)
+        setShowDropdown(false);
       }
-    }
+    };
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
         onClick={handleClick}
         variant={isConnected ? "outline" : "default"}
-        className="flex items-center gap-2"
+        className="flex items-center bg-blue-500 w-[317px] h-[78px] text-[30px] cursor-pointer hover:bg-blue-500 gap-2"
       >
         {isConnected ? formatAddress(account) : "Connect Wallet"}
       </Button>
@@ -85,5 +85,5 @@ export function ConnectButton() {
         </div>
       )}
     </div>
-  )
+  );
 }

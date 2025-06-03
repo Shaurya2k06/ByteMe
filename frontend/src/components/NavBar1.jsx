@@ -38,10 +38,13 @@ function NavBar1() {
         <Link to="/" className="font-medium text-lg hover:text-blue-500">
           Home
         </Link>
-        <Link to="/" className="font-medium text-lg hover:text-blue-500">
+        <Link
+          to="/features"
+          className="font-medium text-lg hover:text-blue-500"
+        >
           Features
         </Link>
-        <Link to="/" className="font-medium text-lg hover:text-blue-500">
+        <Link to="/support" className="font-medium text-lg hover:text-blue-500">
           Support
         </Link>
         <Link

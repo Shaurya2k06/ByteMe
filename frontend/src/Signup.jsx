@@ -75,7 +75,7 @@ function Signup() {
 
             <button
               type="submit"
-              className="bg-blue-500 text-white text-lg font-medium py-3 rounded-md transition-all duration-200 hover:bg-blue-600 hover:shadow-lg focus:ring-2 focus:ring-blue-300 active:scale-95"
+              className="cursor-pointer bg-blue-500 text-white text-lg font-medium py-3 rounded-md transition-all duration-200 hover:bg-blue-600 hover:shadow-lg focus:ring-2 focus:ring-blue-300 active:scale-95"
             >
               Create
             </button>
