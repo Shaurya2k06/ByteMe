@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
+import { Menu, X } from "lucide-react";
 
 function NavBar1() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -10,45 +12,94 @@ function NavBar1() {
     };
 
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <div
-      className={`sticky top-0 z-50 flex  justify-between p-5 transition-all h-[79px] duration-300 ${
+      className={`sticky top-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 ${
         isScrolled
-          ? "shadow-md bg-[#00000099] rounded-md text-white"
-          : "bg-white"
+          ? "shadow-md bg-[#00000099] text-white"
+          : "bg-white text-black"
       }`}
     >
-      <div className="flex items-center">
+      <div className="flex items-center gap-3">
         <img
-          className="w-[73px] h-[65px] "
-          src="../public/navbarLogo.svg"
+          src="/navbarLogo.svg"
           alt="logo"
+          className="w-12 h-12 sm:w-[73px] sm:h-[65px]"
         />
-        <h1 className="inline-block font-[700] text-[64px] leading-[100%] text-[#336BFB]">
+        <h1 className="font-bold text-2xl sm:text-[40px] text-[#336BFB] leading-[100%]">
           ByteMe
         </h1>
       </div>
-      <div className=" flex   mr-2 items-center justify-center gap-10">
-        <Link to="/" className="font-[500] text-[20px] leading-[100%] ">
+
+      <div className="hidden md:flex items-center gap-8">
+        <Link to="/" className="font-medium text-lg hover:text-blue-500">
           Home
         </Link>
-        <Link to="/" className="font-[500] text-[20px] leading-[100%] ">
+        <Link to="/" className="font-medium text-lg hover:text-blue-500">
           Features
         </Link>
-        <Link to="/" className="font-[500] text-[20px] leading-[100%] ">
+        <Link to="/" className="font-medium text-lg hover:text-blue-500">
           Support
         </Link>
         <Link
           to="/"
-          className="font-[500]  bg-blue-500 text-white rounded-[15px] text-[20px] p-2 leading-[100%] "
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium text-lg"
         >
           Sign in
         </Link>
       </div>
+
+      <div className="md:hidden ml-auto">
+        {menuOpen ? (
+          <X
+            size={30}
+            onClick={() => setMenuOpen(false)}
+            className="cursor-pointer"
+          />
+        ) : (
+          <Menu
+            size={30}
+            onClick={() => setMenuOpen(true)}
+            className="cursor-pointer"
+          />
+        )}
+      </div>
+
+      {menuOpen && (
+        <div className="absolute top-[80px] right-4 w-[90%] bg-white text-black shadow-md rounded-xl p-5 flex flex-col gap-4 md:hidden z-50">
+          <Link
+            to="/"
+            className="text-lg font-medium"
+            onClick={() => setMenuOpen(false)}
+          >
+            Home
+          </Link>
+          <Link
+            to="/"
+            className="text-lg font-medium"
+            onClick={() => setMenuOpen(false)}
+          >
+            Features
+          </Link>
+          <Link
+            to="/"
+            className="text-lg font-medium"
+            onClick={() => setMenuOpen(false)}
+          >
+            Support
+          </Link>
+          <Link
+            to="/"
+            className="bg-blue-500 text-white text-center py-2 rounded-md font-medium"
+            onClick={() => setMenuOpen(false)}
+          >
+            Sign in
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

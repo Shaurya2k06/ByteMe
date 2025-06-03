@@ -48,7 +48,7 @@ function TimeLine() {
 
   return (
     <div className="w-full p-5  ">
-      <h2 className="font-[500] text-[48px] leading-[100%] mb-10 text-left ">
+      <h2 className="font-[500] px-5 text-[48px] leading-[100%] mb-10 text-left ">
         How does it work?
       </h2>
       <div className="space-y-10 flex flex-col items-center w-full">

@@ -12,10 +12,8 @@ function TimeLineStep({ step, title, description, icon, isLast }) {
       viewport={{ once: true, amount: 0.3 }}
       className="relative w-full flex justify-center"
     >
-      {/* Center Dashed Line */}
       <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 w-0.5 border-l-2 border-dashed border-blue-300 z-0" />
 
-      {/* Step Content */}
       <div className="w-full max-w-6xl flex items-center justify-between px-4 py-12 relative z-10">
         {isEven ? (
           <>

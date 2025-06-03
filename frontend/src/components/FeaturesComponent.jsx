@@ -3,36 +3,41 @@ import React from "react";
 function FeaturesComponent() {
   const featureBoxes = [
     {
-      icon: "../public/cash.svg",
+      icon: "/cash.svg",
       text: "Pay Fees & much more",
     },
     {
-      icon: "../public/paperclip.svg",
+      icon: "/paperclip.svg",
       text: "Peer-to-Peer Transfers",
     },
     {
-      icon: "../public/bag.svg",
+      icon: "/bag.svg",
       text: "Exciting offers on 100+ items",
     },
     {
-      icon: "../public/friends.svg",
+      icon: "/friends.svg",
       text: "Skip the queue for Events",
     },
   ];
 
   return (
-    <div className="p-10">
-      <h1 className="font-[500] text-[48px] leading-[100%] ">Features</h1>
-      <div className="mt-10 flex items-center gap-5 hover:gap-1 duration-300 justify-evenly ">
-        {featureBoxes.map((box) => {
+    <div className="px-5 py-10 w-full flex flex-col ">
+      <h1 className="px-5 font-medium text-3xl md:text-5xl text-left">
+        Features
+      </h1>
+      <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full justify-items-center">
+        {featureBoxes.map((box, index) => {
           return (
-            <div className="w-[253px]  shadow-md h-[257px] justify-center rounded-md flex flex-col items-center gap-3 hover:scale-105 transition-transform duration-300 ">
+            <div
+              key={index}
+              className="w-[200px] sm:w-[220px] md:w-[253px] h-[230px] sm:h-[240px] md:h-[257px] shadow-md rounded-md flex flex-col items-center justify-center gap-3 hover:scale-105 transition-transform duration-300"
+            >
               <img
-                className="w-[129px] h-[129px]  "
+                className="w-[100px] sm:w-[110px] md:w-[129px] h-[100px] sm:h-[110px] md:h-[129px]"
                 src={box.icon}
-                alt="icon1"
+                alt="icon"
               />
-              <p className=" text-[#666666] text-[20px] font-[500] leading-[100%] text-center -tracking-[-2%]">
+              <p className="text-[#666666] text-center text-base sm:text-lg md:text-[20px] font-medium tracking-tight px-2">
                 {box.text}
               </p>
             </div>
