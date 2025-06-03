@@ -31,7 +31,7 @@ export function TypewriterEffectDemo() {
     },
   ];
   return (
-    <div className="flex flex-col items-center justify-center h-[40rem] ">
+    <div className="flex flex-col items-center justify-center h-[200px] w-[800px] ">
       {/* <p className="text-neutral-600 dark:text-neutral-200 text-base  mb-10">
         The road to freedom starts from here
       </p> */}

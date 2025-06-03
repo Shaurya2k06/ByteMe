@@ -3,7 +3,7 @@ import { Link } from "react-router";
 
 function NavBar1() {
   return (
-    <div className=" flex justify-between">
+    <div className=" flex justify-between p-5">
       <div className="flex">
         <img
           className="w-[73px] h-[65px] "
@@ -15,18 +15,18 @@ function NavBar1() {
         </h1>
       </div>
       <div className=" flex   mr-2 items-center justify-center gap-10">
-        <Link to="/" className="font-[500] text-[28px] leading-[100%] ">
+        <Link to="/" className="font-[500] text-[20px] leading-[100%] ">
           Home
         </Link>
-        <Link to="/" className="font-[500] text-[28px] leading-[100%] ">
+        <Link to="/" className="font-[500] text-[20px] leading-[100%] ">
           Features
         </Link>
-        <Link to="/" className="font-[500] text-[28px] leading-[100%] ">
+        <Link to="/" className="font-[500] text-[20px] leading-[100%] ">
           Support
         </Link>
         <Link
           to="/"
-          className="font-[500]  bg-blue-500 text-white rounded-[15px] text-[28px] p-2 leading-[100%] "
+          className="font-[500]  bg-blue-500 text-white rounded-[15px] text-[20px] p-2 leading-[100%] "
         >
           Sign in
         </Link>
