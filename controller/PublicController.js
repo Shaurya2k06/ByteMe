@@ -27,16 +27,18 @@ async function signUp(req, res) {
             userName : body.userName,
             userEmail : body.userEmail,
             password : hashedPass,
+            role : body.role,
         })
 
         const token = jwt.sign(
-            { userEmail: newUser.userEmail, userName: newUser.userName },
+            { userEmail: newUser.userEmail, userName: newUser.userName, role : newUser.role },
             JWT_KEY,
             { expiresIn: '1d' }
         );
 
         return res.status(201).json({message: "User SignUp Sucessful",
             username : body.userName,
+            role : body.role,
             token : token,
         });
     } catch (signup_error) {
@@ -67,6 +69,7 @@ async function login(req, res) {
         const token = jwt.sign({
             userName : userInDb.userName,
             userEmail: userInDb.userEmail,
+            role : userInDb.role,
         },
             JWT_KEY,
             {expiresIn: "1d"}

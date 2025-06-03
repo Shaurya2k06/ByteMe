@@ -2,6 +2,7 @@ const express = require('express');
 const {connectMongoDB} = require('./connection')
 const UserRouter = require('./routes/UserRouter')
 const PublicRouter = require('./routes/PublicRouter')
+const EventRouter = require('./routes/EventRouter')
 const {jsonParser} = require('./middlewares/index')
 
 const app = express();
@@ -13,9 +14,11 @@ connectMongoDB("mongodb://127.0.0.1:27017/ByteMe")
 
 app.use(jsonParser());
 
-app.use("/user", UserRouter)
+app.use("/user",  UserRouter)
 
 app.use("/public", PublicRouter)
+
+app.use("/events", EventRouter)
 
 
 app.listen(PORT, () => console.log("Server has been started on Port :" + PORT));
