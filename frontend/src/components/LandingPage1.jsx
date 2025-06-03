@@ -3,6 +3,7 @@ import NavBar1 from "./NavBar1";
 import { TypewriterEffectDemo } from "./typewriterEffect";
 import { Link } from "react-router";
 import { DotBackgroundDemo } from "./ui/DotBackgroundDemo";
+import { ConnectButton } from "./ConnectButton";
 
 function LandingPage1() {
   return (
@@ -18,12 +19,9 @@ function LandingPage1() {
             all using crypto on one seamless platform.
           </p>
 
-          <Link
-            to="#"
-            className="bg-blue-500 text-white text-lg sm:text-xl font-semibold px-6 py-3 rounded-md w-[70%] sm:w-[50%] lg:w-[40%] text-center"
-          >
-            Connect Wallet
-          </Link>
+          <div className="w-[70%] sm:w-[50%] lg:w-[40%]">
+            <ConnectButton />
+          </div>
         </div>
 
         <div className="w-full lg:w-1/2 flex justify-center">
