@@ -40,6 +40,15 @@ function NavBar1() {
           Home
         </Link>
 
+        <ScrollLink
+          to="features"
+          smooth={true}
+          duration={500}
+          className="font-medium text-lg hover:text-blue-500 cursor-pointer"
+        >
+          Features
+        </ScrollLink>
+
         <Link to="/support" className="font-medium text-lg hover:text-blue-500">
           Support
         </Link>
