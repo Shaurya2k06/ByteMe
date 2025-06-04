@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
 const JWT_KEY = process.env.JWT_SECRET;
+const  ethers  = require('ethers');
 
 
 async function signUp(req, res) {
@@ -85,7 +86,99 @@ async function login(req, res) {
     }
 }
 
+
+async function walletLogin(req, res) {
+    try {
+        const { walletAddress, signature, nonce } = req.body;
+
+        const expectedMessage = `Sign this message to login: ${nonce}`;
+        const recoveredAddress = ethers.verifyMessage(expectedMessage, signature);
+
+        if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+            return res.status(401).json({ message: "Invalid signature" });
+        }
+
+        let user = await User.findOne({ walletAddress });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const token = jwt.sign(
+            { userName: user.userName, walletAddress: user.walletAddress, role: user.role },
+            JWT_KEY,
+            { expiresIn: '1d' }
+        );
+
+        return res.status(200).json({
+            message: "Wallet login successful",
+            token,
+            username: user.userName,
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Login failed" });
+    }
+}
+
+
+async function walletSignup(req, res) {
+    try {
+        const { userName, userEmail, role, walletAddress, signature, nonce } = req.body;
+
+        if (!userName || !userEmail || !walletAddress || !signature || !nonce || !role) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const existing = await User.findOne({
+            $or: [
+                { userName },
+                { userEmail },
+                { walletAddress: walletAddress.toLowerCase() }
+            ]
+        });
+
+        if (existing) {
+            return res.status(409).json({ message: "Username, email or wallet already exists" });
+        }
+
+        // Verify wallet signature
+        const expectedMessage = `Sign this message to register: ${nonce}`;
+        const recovered = ethers.verifyMessage(expectedMessage, signature);
+
+        if (recovered.toLowerCase() !== walletAddress.toLowerCase()) {
+            return res.status(401).json({ message: "Invalid wallet signature" });
+        }
+
+
+        const newUser = await User.create({
+            userName,
+            userEmail,
+            walletAddress: walletAddress.toLowerCase(),
+            role: "user"
+        });
+
+        const token = jwt.sign(
+            { userName: newUser.userName, userEmail: newUser.userEmail, walletAddress: newUser.walletAddress, role: newUser.role },
+            JWT_KEY,
+            { expiresIn: "1d" }
+        );
+
+        return res.status(201).json({
+            message: "Signup successful",
+            token,
+            username: newUser.userName,
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Wallet signup failed" });
+    }
+}
+
+
 module.exports = {
     signUp,
-    login
+    login,
+    walletSignup,
+    walletLogin
 };

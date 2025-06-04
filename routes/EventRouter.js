@@ -2,11 +2,11 @@ const express = require('express')
 const { createEvent,
         eventsRegistration,
         searchEvents } = require('../controller/EventController')
-
+const authorizedRoles = require('../middlewares/roleAuthenticator')
 
 const router = express.Router();
 
-router.post("/createEvent", createEvent)
+router.post("/createEvent", authorizedRoles("admin", "dev"), createEvent)
 
 router.post("/joinEvent", eventsRegistration)
 

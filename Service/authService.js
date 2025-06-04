@@ -7,11 +7,22 @@ const JWT_KEY = process.env.JWT_SECRET;
 async function verifyUserAuth(req) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({message: 'Unauthorized, No token provided'});
+        throw new Error('Unauthorized, No token provided');
     }
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_KEY);
-    const user = await User.findOne({ userEmail: decoded.userEmail });
+
+    const conditions = [];
+
+    if (decoded.userEmail) conditions.push({ userEmail: decoded.userEmail });
+    if (decoded.userName) conditions.push({ userName: decoded.userName });
+    if (decoded.walletAddress) conditions.push({ walletAddress: decoded.walletAddress });
+
+
+    if (conditions.length === 0) {
+        throw new Error('Invalid token payload: no user identification found');
+    }
+    const user = await User.findOne({ $or: conditions });
     return user;
 }
 

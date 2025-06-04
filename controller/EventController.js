@@ -58,6 +58,7 @@ async function createEvent(req, res) {
 async function eventsRegistration(req, res) {
     try {
         const user = await verifyUserAuth(req);
+        if(!user) res.status(404).json({message : 'User not found'})
         const eventId = req.body.eventId;
         const event = await Events.findById(eventId);
         if (!event) return res.status(404).json({ message: 'Event not found' });

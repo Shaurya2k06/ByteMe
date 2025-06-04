@@ -15,7 +15,17 @@ async function getUser(req, res) {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, JWT_KEY);
 
-        const user = await User.findOne({userEmail: decoded.userEmail})
+        const conditions = [];
+
+        if (decoded.userEmail) conditions.push({ userEmail: decoded.userEmail });
+        if (decoded.userName) conditions.push({ userName: decoded.userName });
+        if (decoded.walletAddress) conditions.push({ walletAddress: decoded.walletAddress });
+
+        if (conditions.length === 0) {
+            return res.status(400).json({ message: 'Invalid token payload: no user identification found' });
+        }
+
+        const user = await User.findOne({ $or: conditions })
             .select('-password')
             .populate('events');
 
