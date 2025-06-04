@@ -84,7 +84,32 @@ async function getPurchaseHistory(req, res) {
     }
 }
 
+async function getAllStudents(req, res) {
+    try {
+        const user = await verifyUserAuth(req);
+        if(!user) return res.status(404).json({message : "User not found"});
+
+        const allStudents = await User.find({role : "user"});
+        if(!allStudents || allStudents.length === 0) return res.status(200).json({students: []});
+
+        const studentsData = allStudents.map(student => ({
+            userName: student.userName,
+            walletAddress: student.walletAddress,
+            feeStatus: student.feeStatus,
+        }));
+
+        return res.status(200).json({ students: studentsData });
+    } catch(err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server error" });
+    }
+}
+
+
+
+
 module.exports = {
     getUser,
-    getPurchaseHistory
+    getPurchaseHistory,
+    getAllStudents
 };

@@ -27,7 +27,11 @@ const userSchema = new mongoose.Schema({
     events: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Events',
-    }]
+    }],
+    feeStatus : {
+        type : Boolean,
+        default: false,
+    }
 })
 
 const User = mongoose.model("User", userSchema);
