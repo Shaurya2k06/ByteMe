@@ -21,14 +21,15 @@ function LandingPage1() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="w-full">
+          <div className="w-full flex flex-col">
             <TypewriterEffectDemo />
           </div>
-
-          <p className="font-normal text-lg sm:text-xl text-[#666666] leading-relaxed max-w-[500px]">
-            Ditch the cash, skip the queues, and forget about the paperwork —
-            all using crypto on one seamless platform.
-          </p>
+          <div className="w-full flex md:ml-30 justify-center lg:justify-start">
+            <p className="font-normal text-lg sm:text-xl text-[#666666] text-center leading-relaxed max-w-[500px] text-center lg:text-left">
+              Ditch the cash, skip the queues, and forget about the paperwork —
+              all using crypto on one seamless platform.
+            </p>
+          </div>
 
           <motion.div
             className="w-[70%] sm:w-[50%] lg:w-[40%]"

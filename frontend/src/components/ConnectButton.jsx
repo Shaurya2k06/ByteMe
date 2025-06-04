@@ -53,11 +53,11 @@ export function ConnectButton() {
   }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative flex md:ml-50" ref={dropdownRef}>
       <Button
         onClick={handleClick}
         variant={isConnected ? "outline" : "default"}
-        className="flex items-center bg-blue-500 w-[317px] h-[78px] text-[30px] cursor-pointer hover:bg-blue-500 gap-2"
+        className="flex items-center bg-blue-500 w-[250px] h-[58px] text-[30px] cursor-pointer hover:bg-blue-500 gap-2"
       >
         {isConnected ? formatAddress(account) : "Connect Wallet"}
       </Button>

@@ -6,6 +6,6 @@ import EventPop from "./components/EventPop.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <EventPop />
+    <App />
   </StrictMode>
 );
