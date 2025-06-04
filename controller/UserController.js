@@ -1,6 +1,8 @@
 const User = require('../Model/User')
 const Event = require('../Model/Events')
 const jwt = require('jsonwebtoken')
+const {verifyUserAuth} = require("../Service/authService");
+const Purchase = require("../Model/Purchase");
 require('dotenv').config();
 const JWT_KEY = process.env.JWT_SECRET;
 
@@ -69,6 +71,20 @@ async function getUser(req, res) {
     }
 }
 
+async function getPurchaseHistory(req, res) {
+    try {
+        const user = await verifyUserAuth(req);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const history = await Purchase.find({ user: user._id }).populate('item');
+        return res.status(200).json({ history });
+    } catch (err) {
+        console.error("History Error:", err);
+        return res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
+}
+
 module.exports = {
-    getUser
+    getUser,
+    getPurchaseHistory
 };
