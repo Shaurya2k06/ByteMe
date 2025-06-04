@@ -40,15 +40,6 @@ function NavBar1() {
           Home
         </Link>
 
-        <ScrollLink
-          to="features"
-          smooth={true}
-          duration={500}
-          className="font-medium text-lg hover:text-blue-500 cursor-pointer"
-        >
-          Features
-        </ScrollLink>
-
         <Link to="/support" className="font-medium text-lg hover:text-blue-500">
           Support
         </Link>
@@ -85,13 +76,16 @@ function NavBar1() {
           >
             Home
           </Link>
-          <Link
-            to="/"
-            className="text-lg font-medium"
-            onClick={() => setMenuOpen(false)}
+
+          <ScrollLink
+            to="features"
+            smooth={true}
+            duration={500}
+            className="font-medium text-lg hover:text-blue-500 cursor-pointer"
           >
             Features
-          </Link>
+          </ScrollLink>
+
           <Link
             to="/"
             className="text-lg font-medium"
