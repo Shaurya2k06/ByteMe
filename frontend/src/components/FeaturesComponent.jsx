@@ -21,7 +21,7 @@ function FeaturesComponent() {
   ];
 
   return (
-    <div className="px-5 py-10 w-full flex flex-col ">
+    <div className="px-5 py-10 w-full flex flex-col  " id="features">
       <h1 className="px-5 font-medium text-3xl md:text-5xl text-left">
         Features
       </h1>

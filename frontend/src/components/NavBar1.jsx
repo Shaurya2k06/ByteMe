@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { Menu, X } from "lucide-react";
+import { Link as ScrollLink } from "react-scroll";
 
 function NavBar1() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -38,12 +39,16 @@ function NavBar1() {
         <Link to="/" className="font-medium text-lg hover:text-blue-500">
           Home
         </Link>
-        <Link
-          to="/features"
-          className="font-medium text-lg hover:text-blue-500"
+
+        <ScrollLink
+          to="features"
+          smooth={true}
+          duration={500}
+          className="font-medium text-lg hover:text-blue-500 cursor-pointer"
         >
           Features
-        </Link>
+        </ScrollLink>
+
         <Link to="/support" className="font-medium text-lg hover:text-blue-500">
           Support
         </Link>
