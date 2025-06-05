@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown, Upload, X } from "lucide-react";
 
-const AddEventForm = () => {
+const AddEventForm = ({ setEvent }) => {
   const [formData, setFormData] = useState({
     eventName: "",
     dateOfEvent: "",
@@ -48,10 +48,13 @@ const AddEventForm = () => {
             </h2>
           </div>
           <button
-            onClick={() => setShowForm(false)}
+            onClick={() => {
+              setShowForm(false);
+              setEvent(false);
+            }}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <X size={18} className="sm:w-5 sm:h-5" />
+            <X size={18} className="sm:w-5 cursor-pointer sm:h-5" />
           </button>
         </div>
 

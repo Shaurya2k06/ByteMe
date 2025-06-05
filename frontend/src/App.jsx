@@ -6,6 +6,7 @@ import Login from "./Login.jsx";
 import Signup from "./Signup.jsx";
 import FeaturesComponent from "./components/FeaturesComponent.jsx";
 import Dashboard from "./Dashboard.jsx";
+import Shop from "./Shop.jsx";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/shop" element={<Shop />} />
       </Routes>
     </BrowserRouter>
   );
