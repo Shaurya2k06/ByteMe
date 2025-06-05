@@ -158,14 +158,14 @@ const Transactions = () => {
 };
 
 // Main Dashboard Layout
-const Dashboard2 = () => {
+const Dashboard2 = ({ event, setEvent }) => {
   return (
     <div className="w-full h-full bg-gray-50 flex flex-col gap-5 p-5">
       {/* First Div - Responsive Row/Column */}
       <div className="flex flex-col md:flex-row gap-5 flex-1">
         {/* Left Div */}
         <div className="md:w-[40%] flex flex-col gap-2.5">
-          <AddNewEvent />
+          <AddNewEvent setEvent={setEvent} />
           <ImagePlaceholder />
         </div>
 
