@@ -83,6 +83,7 @@ function NavBar1() {
 
         <Link
           to="/support"
+          d
           className={getLinkClass("support")}
           onClick={() => setActiveLink("support")}
         >
