@@ -17,7 +17,7 @@ connectMongoDB("mongodb://127.0.0.1:27017/ByteMe")
 
 app.use(jsonParser());
 
-app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 
 app.use("/user",  UserRouter)
 

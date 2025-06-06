@@ -52,19 +52,27 @@ async function signUp(req, res) {
 async function login(req, res) {
     try {
         const body = req.body;
+        console.log("login in")
+        console.log(body)
+        console.log(body.userName + " " + body.username)
+        console.log(body.password + " " + body.password)
         if(!body.userName || !body.password) {
             return res.status(400).json({ message: 'All fields are required' });
+            console.log("All fields whatever")
         }
+        console.log("stage 1")
         const userInDb = await User.findOne({
             userName: body.userName,
         });
         if(!userInDb) {
             return res.status(400).json({ message: 'Invalid Username' });
+            console.log("UserName Invalid")
         }
 
         const isPasswordValid = await bcrypt.compare(body.password, userInDb.password);
         if(!isPasswordValid) {
             return res.status(401).json({ message: 'Invalid Password' });
+            console.log("Invalid Pass")
         }
 
         const token = jwt.sign({
@@ -78,7 +86,8 @@ async function login(req, res) {
         return res.status(200).json({
             message: 'Login successful',
             username: userInDb.userName,
-            token: token
+            token: token,
+            role : userInDb.role,
         });
     } catch (login_err) {
         console.error(login_err);
@@ -89,7 +98,16 @@ async function login(req, res) {
 
 async function walletLogin(req, res) {
     try {
-        const { walletAddress, signature, nonce } = req.body;
+        const { walletAddress, signature } = req.body;
+
+        if (!walletAddress || !signature) {
+            return res.status(400).json({ message: "Missing wallet address or signature" });
+        }
+
+        const nonce = nonceMap.get(walletAddress.toLowerCase());
+        if (!nonce) {
+            return res.status(401).json({ message: "Nonce not found or expired" });
+        }
 
         const expectedMessage = `Sign this message to login: ${nonce}`;
         const recoveredAddress = ethers.verifyMessage(expectedMessage, signature);
@@ -97,6 +115,9 @@ async function walletLogin(req, res) {
         if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
             return res.status(401).json({ message: "Invalid signature" });
         }
+
+        // Clear nonce after use to prevent replay
+        nonceMap.delete(walletAddress.toLowerCase());
 
         let user = await User.findOne({ walletAddress });
         if (!user) {
@@ -176,9 +197,31 @@ async function walletSignup(req, res) {
 }
 
 
+//nonce thingy
+const nonceMap = new Map(); // Replace with Redis or DB in production
+
+function generateNonce() {
+    return crypto.randomUUID();
+}
+
+async function getNonce(req, res) {
+    const { walletAddress } = req.params;
+
+    if (!walletAddress) {
+        return res.status(400).json({ message: "Wallet address is required" });
+    }
+
+    const nonce = generateNonce();
+    nonceMap.set(walletAddress.toLowerCase(), nonce);
+
+    return res.status(200).json({ nonce });
+}
+
+
 module.exports = {
     signUp,
     login,
     walletSignup,
-    walletLogin
+    walletLogin,
+    getNonce
 };
