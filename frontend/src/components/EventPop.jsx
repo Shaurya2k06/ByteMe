@@ -6,7 +6,7 @@ const AddEventForm = ({ setEvent }) => {
     eventName: "",
     dateOfEvent: "",
     registrationFees: "",
-    postingDate: "",
+    location: "",
     description: "",
     eventType: "",
   });
@@ -116,15 +116,13 @@ const AddEventForm = ({ setEvent }) => {
             </div>
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Posting Date
+                Location
               </label>
               <input
                 type="text"
-                value={formData.postingDate}
-                onChange={(e) =>
-                  handleInputChange("postingDate", e.target.value)
-                }
-                placeholder="10/09/2025"
+                value={formData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
+                placeholder="Enter Location"
                 className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
