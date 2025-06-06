@@ -8,10 +8,14 @@ const ShopRouter = require('./routes/ShopRouter')
 const PaymentRouter = require('./routes/PaymentRouter')
 const {jsonParser} = require('./middlewares/index')
 
+const mongoURI = process.env.MONGO_URI;
+
 const app = express();
 const PORT = 9092;
 
-connectMongoDB("mongodb://127.0.0.1:27017/ByteMe")
+
+connectMongoDB(mongoURI)
+
 .then(() => console.log("MongoDB Connected!!"))
 .catch(err => console.log("Error, Can't connect to DB", err));
 
