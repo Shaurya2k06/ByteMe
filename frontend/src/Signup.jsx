@@ -1,50 +1,8 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+
+import React from "react";
+import { Link } from "react-router";
 
 function Signup() {
-  const [userEmail, setEmail] = useState("");
-  const [userName, setUserName] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    try {
-      const response = await axios.post(
-        "http://localhost:9092/public/signup",
-        {
-          userName,
-          userEmail,
-          password,
-          role: "dev", // hardcoded role
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true, // for CORS cookies if needed
-        }
-      );
-      setSuccess("Signup successful! Redirecting to login...");
-      setTimeout(() => navigate("/login"), 1500);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Signup failed. Please check your details and try again."
-      );
-    }
-  };
-
   return (
     <div className="w-full min-h-screen flex justify-center items-center bg-white px-4 py-6">
       <div className="w-full max-w-5xl shadow-lg flex flex-col md:flex-row p-5 rounded-lg bg-white">
@@ -69,7 +27,7 @@ function Signup() {
         </div>
 
         <div className="w-full md:w-1/2 p-5 flex flex-col justify-center">
-          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+          <form className="flex flex-col gap-6">
             <div className="flex flex-col">
               <label htmlFor="email" className="mb-1 text-sm font-medium">
                 Email
@@ -80,9 +38,6 @@ function Signup() {
                 id="email"
                 placeholder="Enter your email"
                 className="bg-gray-100 border border-gray-300 rounded-md px-4 py-3 text-base outline-none transition-all duration-200 hover:shadow-md focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:shadow-lg active:scale-95"
-                value={userEmail}
-                onChange={(e) => setEmail(e.target.value)}
-                required
               />
             </div>
 
@@ -96,9 +51,6 @@ function Signup() {
                 id="username"
                 placeholder="Enter your username"
                 className="bg-gray-100 border border-gray-300 rounded-md px-4 py-3 text-base outline-none transition-all duration-200 hover:shadow-md focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:shadow-lg active:scale-95"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                required
               />
             </div>
 
@@ -112,9 +64,6 @@ function Signup() {
                 id="password"
                 placeholder="Enter your password"
                 className="bg-gray-100 border border-gray-300 rounded-md px-4 py-3 text-base outline-none mb-3 transition-all duration-200 hover:shadow-md focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:shadow-lg active:scale-95"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
               />
               <input
                 type="password"
@@ -122,19 +71,13 @@ function Signup() {
                 id="confirmPassword"
                 placeholder="Re-enter your password"
                 className="bg-gray-100 border border-gray-300 rounded-md px-4 py-3 text-base outline-none transition-all duration-200 hover:shadow-md focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:shadow-lg active:scale-95"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
               />
             </div>
-
-            {error && (
-              <div className="text-red-500 text-sm">{error}</div>
-            )}
-            {success && (
-              <div className="text-green-500 text-sm">{success}</div>
-            )}
-
+            <select name="roles">
+              <option value="User">User</option>
+              <option value="Admin">Admin</option>
+              <option Value="Dev">Dev</option>
+            </select>
             <button
               type="submit"
               className="cursor-pointer bg-blue-500 text-white text-lg font-medium py-3 rounded-md transition-all duration-200 hover:bg-blue-600 hover:shadow-lg focus:ring-2 focus:ring-blue-300 active:scale-95"

@@ -6,7 +6,7 @@ const AddEventForm = ({ setEvent }) => {
     eventName: "",
     dateOfEvent: "",
     registrationFees: "",
-    postingDate: "",
+    location: "",
     description: "",
     eventType: "",
   });
@@ -31,11 +31,17 @@ const AddEventForm = ({ setEvent }) => {
     setShowDropdown(false);
   };
 
+  const handleSubmit = () => {
+    console.log("Submitted Data:", formData);
+    setEvent(false);
+    // submit logic here
+  };
+
   if (!showForm) return null;
 
   return (
     <div className="flex items-center w-full h-screen justify-center p-2 sm:p-4">
-      <div className="bg-white w-[60%] h-[80%] rounded-lg shadow-xl w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl relative">
+      <div className="bg-white w-[60%] h-[90%] rounded-lg shadow-xl w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl relative">
         <div className="flex items-center justify-between p-4 sm:p-6 border-b">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center">
@@ -110,15 +116,13 @@ const AddEventForm = ({ setEvent }) => {
             </div>
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Posting Date
+                Location
               </label>
               <input
                 type="text"
-                value={formData.postingDate}
-                onChange={(e) =>
-                  handleInputChange("postingDate", e.target.value)
-                }
-                placeholder="10/09/2025"
+                value={formData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
+                placeholder="Enter Location"
                 className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -189,6 +193,14 @@ const AddEventForm = ({ setEvent }) => {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Add Event Button */}
+          <div
+            onClick={handleSubmit}
+            className="mt-4 w-full bg-blue-600 text-white text-center py-2 sm:py-3 rounded-md font-semibold cursor-pointer hover:bg-blue-700 transition duration-200"
+          >
+            Add Event
           </div>
         </div>
       </div>
