@@ -15,7 +15,6 @@ const PORT = 9092;
 
 
 connectMongoDB(mongoURI)
-
 .then(() => console.log("MongoDB Connected!!"))
 .catch(err => console.log("Error, Can't connect to DB", err));
 
