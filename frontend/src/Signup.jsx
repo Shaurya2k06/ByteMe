@@ -72,7 +72,11 @@ function Signup() {
                 className="bg-gray-100 border border-gray-300 rounded-md px-4 py-3 text-base outline-none transition-all duration-200 hover:shadow-md focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:shadow-lg active:scale-95"
               />
             </div>
-
+            <select name="roles">
+              <option value="User">User</option>
+              <option value="Admin">Admin</option>
+              <option Value="Dev">Dev</option>
+            </select>
             <button
               type="submit"
               className="cursor-pointer bg-blue-500 text-white text-lg font-medium py-3 rounded-md transition-all duration-200 hover:bg-blue-600 hover:shadow-lg focus:ring-2 focus:ring-blue-300 active:scale-95"
