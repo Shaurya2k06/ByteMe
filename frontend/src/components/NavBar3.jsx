@@ -118,9 +118,9 @@ function NavBar3() {
             >
               <div className="flex flex-col text-right">
                 <span className={`font-medium text-sm ${textColor}`}>
-                  username
+                  {localStorage.getItem("userName")}
                 </span>
-                <span className={`text-xs ${subTextColor}`}>type of acc</span>
+                <span className={`text-xs ${subTextColor}`}>{localStorage.getItem("role")}</span>
               </div>
               <User className={`${iconColor}`} size={28} />
               <ChevronDown className={`${iconColor}`} size={20} />
@@ -184,9 +184,9 @@ function NavBar3() {
               <User className="text-gray-700" size={28} />
               <div className="flex flex-col">
                 <span className="text-gray-700 font-medium text-sm">
-                  username
+                  {localStorage.getItem("userName")}
                 </span>
-                <span className="text-gray-500 text-xs">type of acc</span>
+                <span className="text-gray-500 text-xs">{localStorage.getItem("role")}</span>
               </div>
             </div>
 

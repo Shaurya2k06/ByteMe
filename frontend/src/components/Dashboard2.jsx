@@ -67,7 +67,7 @@ const StudentList = () => {
 };
 
 // Add New Event Component
-const AddNewEvent = () => {
+const AddNewEvent = ( {setEvent} ) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 px-3 py-3 hover:shadow-lg transition-shadow duration-300">
       <div className="flex items-center gap-3">
@@ -80,8 +80,9 @@ const AddNewEvent = () => {
           Add New Event
         </h3>
       </div>
-
-      <button className="w-full mt-8 bg-blue-600 text-white rounded-full h-12 flex items-center justify-center hover:bg-blue-700 transition-colors">
+        <button className="w-full mt-8 bg-blue-600 text-white rounded-full h-12 flex items-center justify-center hover:bg-blue-700 transition-colors" 
+        onClick={() => setEvent(true)}
+        >
         <span className="text-xl font-bold">+</span>
       </button>
     </div>

@@ -1,11 +1,62 @@
 import React, { useState } from "react";
 import { Link } from "react-router";
+import axios from "axios"; // <-- Import axios
+import { useNavigate } from "react-router-dom";
 
 function Login() {
-  const [username, onUsername] = useState(false);
-  const [password, onPassword] = useState(false);
+  const [userName, setUserName] = useState(""); // <-- Track userName value
+  const [password, setPassword] = useState(""); // <-- Track password value
+  const [usernameFocus, onUsername] = useState(false);
+  const [passwordFocus, onPassword] = useState(false);
   const [clicked, setClicked] = useState(false);
   const [signedClick, setSignedClick] = useState(false);
+  const [error, setError] = useState("");
+
+  // Handle form submit
+  const navigate = useNavigate();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const response = await axios.post(
+        "http://localhost:9092/public/login",
+        { userName, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, // for CORS cookies if needed
+        }
+      );
+      // Save JWT for future requests
+      const { token, role } = response.data;
+      console.log(token);
+      console.log(role);
+      
+      localStorage.setItem("userName", userName);
+      localStorage.setItem("jwt", token);
+      localStorage.setItem("role", role);
+
+
+      // Example: How to use JWT in future requests
+      // const yourJWT = localStorage.getItem("jwt");
+      // await axios.post(
+      //   "http://localhost:9092/pay-fee",
+      //   { txHash: transactionHash },
+      //   {
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //       Authorization: `Bearer ${yourJWT}`,
+      //     },
+      //   }
+      // );
+
+      navigate("/dashboard");
+      // Redirect or update UI as needed
+    } catch (err) {
+      setError("Login failed. Please check your credentials.");
+    }
+  };
 
   return (
     <div className="w-full min-h-screen flex justify-center items-center py-5 px-4 bg-white">
@@ -30,12 +81,12 @@ function Login() {
             </p>
           </div>
 
-          <form className="flex mt-8 flex-col items-center" method="post">
+          <form className="flex mt-8 flex-col items-center" method="post" onSubmit={handleSubmit}>
             <div className="flex flex-col w-full max-w-[450px] mb-5">
               <label
                 htmlFor="username"
                 className={`font-semibold text-base md:text-lg mb-2 ${
-                  username && "text-blue-500"
+                  usernameFocus && "text-blue-500"
                 }`}
               >
                 Username
@@ -47,6 +98,8 @@ function Login() {
                 className="w-full h-10 md:h-12 px-3 text-sm md:text-base rounded-md bg-gray-100 border border-gray-400 outline-none transition-all focus:ring-2 focus:ring-blue-500 focus:rounded-lg hover:shadow"
                 onFocus={() => onUsername(true)}
                 onBlur={() => onUsername(false)}
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
               />
             </div>
 
@@ -54,7 +107,7 @@ function Login() {
               <label
                 htmlFor="password"
                 className={`font-semibold text-base md:text-lg mb-2 ${
-                  password && "text-blue-500"
+                  passwordFocus && "text-blue-500"
                 }`}
               >
                 Password
@@ -66,8 +119,16 @@ function Login() {
                 className="w-full h-10 md:h-12 px-3 text-sm md:text-base rounded-md bg-gray-100 border border-gray-400 outline-none transition-all focus:ring-2 focus:ring-blue-500 focus:rounded-lg hover:shadow"
                 onFocus={() => onPassword(true)}
                 onBlur={() => onPassword(false)}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+
+            {error && (
+              <div className="text-red-500 mb-3 w-full max-w-[450px] text-sm">
+                {error}
+              </div>
+            )}
 
             <input
               type="submit"

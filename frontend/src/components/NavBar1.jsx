@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Menu, X } from "lucide-react";
 import { Link as ScrollLink } from "react-scroll";
 
@@ -7,6 +7,7 @@ function NavBar1() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeLink, setActiveLink] = useState("home");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,6 +39,10 @@ function NavBar1() {
         : "after:w-0 after:bg-blue-500 group-hover:after:w-full"
     } after:transition-all after:duration-300`;
   };
+
+  const userName = localStorage.getItem("userName");
+  const isLoggedIn = !!localStorage.getItem("jwt");
+
 
   return (
     <div
@@ -89,13 +94,22 @@ function NavBar1() {
         >
           <span className={getUnderlineClass("support")}>Support</span>
         </Link>
-
+        {isLoggedIn && userName ? (
+          <div
+            className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg cursor-pointer"
+            title={userName}
+            onClick={() => navigate("/dashboard")}
+          >
+            {userName[0].toUpperCase()}
+          </div>
+        ) : (
         <Link
           to="/login"
           className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium text-lg"
         >
           Sign in
         </Link>
+        )}
       </div>
 
       <div className="md:hidden ml-auto">
