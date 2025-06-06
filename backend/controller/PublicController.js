@@ -3,11 +3,11 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
 const JWT_KEY = process.env.JWT_SECRET;
-const  ethers  = require('ethers');
+const  ethers  = require('ether');
 
 
 async function signUp(req, res) {
-    console.log("yayyy")
+    console.log("yayyysss")
     try {
         const body = req.body;
         if(!body || !body.userName || !body.userEmail || !body.password) {

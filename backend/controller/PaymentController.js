@@ -1,4 +1,3 @@
-const User = require("../Model/User")
 const {verifyUserAuth} = require("../Service/authService");
 
 
