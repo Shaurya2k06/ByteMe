@@ -69,17 +69,20 @@ function Login() {
               />
             </div>
 
-            <input
+            <Link
+              to="/dashboard"
               type="submit"
-              value="Sign In"
-              className={`w-full max-w-[450px] h-12 md:h-14 text-white text-base md:text-lg bg-blue-500 rounded-md cursor-pointer transition-transform hover:bg-blue-600 hover:shadow ${
+              className={`w-full max-w-[450px] h-12 md:h-14 text-white text-base flex justify-center items-center md:text-lg bg-blue-500 rounded-md cursor-pointer transition-transform hover:bg-blue-600 hover:shadow ${
                 signedClick ? "scale-95" : ""
               }`}
               onClick={() => {
                 setSignedClick(true);
+
                 setTimeout(() => setSignedClick(false), 150);
               }}
-            />
+            >
+              Sign In
+            </Link>
 
             <div className="flex items-center gap-2 my-5 w-full max-w-[450px]">
               <div className="flex-1 border-t border-gray-400"></div>

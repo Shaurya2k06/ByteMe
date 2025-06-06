@@ -7,6 +7,8 @@ import Signup from "./Signup.jsx";
 import FeaturesComponent from "./components/FeaturesComponent.jsx";
 import Dashboard from "./Dashboard.jsx";
 import Shop from "./Shop.jsx";
+import Events from "./Events.jsx";
+import StudentDashboard from "./StudentDashboard.jsx";
 
 function App() {
   return (
@@ -16,6 +18,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/studentDashboard" element={<StudentDashboard />} />
+
         <Route path="/shop" element={<Shop />} />
       </Routes>
     </BrowserRouter>
