@@ -15,7 +15,7 @@ function Login() {
     setError("");
     try {
       const response = await axios.post(
-        "http://localhost:9092/public/login",
+        "https://byteme-ue8b.onrender.com/public/login",
         { userName, password },
         {
           headers: { "Content-Type": "application/json" },
@@ -37,7 +37,7 @@ function Login() {
   return (
     <div className="w-full min-h-screen flex justify-center items-center py-5 px-4 bg-white">
       <div className="w-full max-w-5xl shadow-lg flex flex-col md:flex-row p-4 bg-white rounded-lg">
-        {/* Image Section */}
+        {/* Image Section  */}
         <div className="w-full h-full md:w-1/2 mb-4 md:mb-0 flex justify-center items-center">
           <img
             src="/loginImage.svg"

@@ -22,7 +22,7 @@ function Signup() {
     }
     try {
       await axios.post(
-        "http://localhost:9092/public/signup",
+        "https://byteme-ue8b.onrender.com/public/signup",
         {
           userName,
           password,
