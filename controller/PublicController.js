@@ -58,7 +58,6 @@ async function login(req, res) {
         console.log(body.password + " " + body.password)
         if(!body.userName || !body.password) {
             return res.status(400).json({ message: 'All fields are required' });
-            console.log("All fields whatever")
         }
         console.log("stage 1")
         const userInDb = await User.findOne({
@@ -66,13 +65,11 @@ async function login(req, res) {
         });
         if(!userInDb) {
             return res.status(400).json({ message: 'Invalid Username' });
-            console.log("UserName Invalid")
         }
 
         const isPasswordValid = await bcrypt.compare(body.password, userInDb.password);
         if(!isPasswordValid) {
             return res.status(401).json({ message: 'Invalid Password' });
-            console.log("Invalid Pass")
         }
 
         const token = jwt.sign({
