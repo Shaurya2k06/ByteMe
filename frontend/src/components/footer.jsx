@@ -13,13 +13,13 @@ function Footer() {
               className="w-[60px] h-[70px] md:w-[75px] md:h-[88px]"
             />
             <h1 className="text-white text-4xl md:text-[48px] font-bold leading-tight">
-              ByteMe
+              UniByte
             </h1>
           </div>
           <div className="text-white flex flex-col gap-1">
             <p className="text-xl font-semibold">Contact Us</p>
             <p className="text-base opacity-80">+91XXXXXXXXXX</p>
-            <p className="text-base opacity-80">support@byteme.com</p>
+            <p className="text-base opacity-80">support@UniByte.com</p>
           </div>
         </div>
 
@@ -53,7 +53,7 @@ function Footer() {
 
       <p className="text-white text-center mt-10 text-sm md:text-base max-w-[700px] opacity-80">
         <em>
-          ByteMe is your campus's digital wallet and event hub — earn, spend,
+          UniByte is your campus's digital wallet and event hub — earn, spend,
           and explore with tokens built for student life.
         </em>
       </p>

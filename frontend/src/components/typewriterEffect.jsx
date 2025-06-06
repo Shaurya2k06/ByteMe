@@ -3,7 +3,7 @@ import { TypewriterEffect } from "./ui/typewritter-effect";
 export function TypewriterEffectDemo() {
   const words = [
     { text: "A " },
-    { text: "smarter " },
+    { text: "Smarter " },
     { text: "Way " },
     { text: "to " },
     { text: "Pay, " },

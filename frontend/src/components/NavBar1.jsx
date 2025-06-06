@@ -63,7 +63,7 @@ function NavBar1() {
             isScrolled ? "text-white" : ""
           }`}
         >
-          ByteMe
+          UniByte
         </h1>
       </div>
 
