@@ -73,7 +73,7 @@ function Signup() {
           <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <div className="flex flex-col">
               <label htmlFor="userEmail" className="mb-1 text-sm font-medium">
-                userEmail
+                Email
               </label>
               <input
                 type="userEmail"

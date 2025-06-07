@@ -1,18 +1,21 @@
 import React, { useState } from "react";
 import { ChevronDown, Upload, X } from "lucide-react";
+import axios from "axios";
 
 const AddEventForm = ({ setEvent }) => {
   const [formData, setFormData] = useState({
     eventName: "",
-    dateOfEvent: "",
-    registrationFees: "",
-    location: "",
-    description: "",
-    eventType: "",
+    eventDate: "",
+    amountToBePaid: "",
+    eventLocation: "",
+    eventDescription: "",
+    tags: "",
   });
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [showForm, setShowForm] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const eventTypes = ["Tech Event", "Sports Event", "Cultural Event"];
 
@@ -26,15 +29,38 @@ const AddEventForm = ({ setEvent }) => {
   const handleEventTypeSelect = (type) => {
     setFormData((prev) => ({
       ...prev,
-      eventType: type,
+      tags: type,
     }));
     setShowDropdown(false);
   };
 
-  const handleSubmit = () => {
-    console.log("Submitted Data:", formData);
-    setEvent(false);
-    // submit logic here
+  const handleSubmit = async () => {
+    setError("");
+    setSuccess("");
+    try {
+      const token = localStorage.getItem("jwt");
+      await axios.post(
+        "http://localhost:9092/events/createEvent",
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          withCredentials: true,
+        }
+      );
+      setSuccess("Event created successfully!");
+      setTimeout(() => {
+        setShowForm(false);
+        setEvent(false);
+      }, 1200);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Failed to create event. Please try again."
+      );
+    }
   };
 
   if (!showForm) return null;
@@ -65,6 +91,12 @@ const AddEventForm = ({ setEvent }) => {
         </div>
 
         <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
+          {error && (
+            <div className="text-red-500 text-sm mb-2">{error}</div>
+          )}
+          {success && (
+            <div className="text-green-500 text-sm mb-2">{success}</div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
@@ -84,9 +116,9 @@ const AddEventForm = ({ setEvent }) => {
               </label>
               <input
                 type="text"
-                value={formData.dateOfEvent}
+                value={formData.eventDate}
                 onChange={(e) =>
-                  handleInputChange("dateOfEvent", e.target.value)
+                  handleInputChange("eventDate", e.target.value)
                 }
                 placeholder="10/10/2025"
                 className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -102,9 +134,9 @@ const AddEventForm = ({ setEvent }) => {
               <div className="relative">
                 <input
                   type="text"
-                  value={formData.registrationFees}
+                  value={formData.amountToBePaid}
                   onChange={(e) =>
-                    handleInputChange("registrationFees", e.target.value)
+                    handleInputChange("amountToBePaid", e.target.value)
                   }
                   placeholder="100.25"
                   className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 sm:pr-12"
@@ -120,8 +152,8 @@ const AddEventForm = ({ setEvent }) => {
               </label>
               <input
                 type="text"
-                value={formData.location}
-                onChange={(e) => handleInputChange("location", e.target.value)}
+                value={formData.eventLocation}
+                onChange={(e) => handleInputChange("eventLocation", e.target.value)}
                 placeholder="Enter Location"
                 className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -133,8 +165,8 @@ const AddEventForm = ({ setEvent }) => {
               Description
             </label>
             <textarea
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
+              value={formData.eventDescription}
+              onChange={(e) => handleInputChange("eventDescription", e.target.value)}
               placeholder="Introducing xyz!...."
               rows={3}
               className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
@@ -162,15 +194,16 @@ const AddEventForm = ({ setEvent }) => {
               </label>
               <div className="relative">
                 <button
+                  type="button"
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left flex items-center justify-between"
                 >
                   <span
                     className={
-                      formData.eventType ? "text-gray-900" : "text-gray-500"
+                      formData.tags ? "text-gray-900" : "text-gray-500"
                     }
                   >
-                    {formData.eventType || "Select an option"}
+                    {formData.tags || "Select an option"}
                   </span>
                   <ChevronDown
                     size={14}
@@ -183,6 +216,7 @@ const AddEventForm = ({ setEvent }) => {
                     {eventTypes.map((type, index) => (
                       <button
                         key={index}
+                        type="button"
                         onClick={() => handleEventTypeSelect(type)}
                         className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none first:rounded-t-md last:rounded-b-md"
                       >
