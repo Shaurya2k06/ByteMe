@@ -8,6 +8,7 @@ const JWT_KEY = process.env.JWT_SECRET;
 
 async function createEvent(req, res) {
     try {
+        console.log(req.body)
         const authHeader = req.headers.authorization;
         if(!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ message: 'Unauthorized, No token provided' });
@@ -29,7 +30,6 @@ async function createEvent(req, res) {
             eventImageUrl,
             tags,
         } = req.body;
-
 
         if (!eventName || !eventLocation || !eventDescription || !eventDate || !amountToBePaid) {
             return res.status(400).json({ message: 'Please provide all required fields' });

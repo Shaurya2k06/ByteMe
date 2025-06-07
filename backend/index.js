@@ -9,6 +9,8 @@ const PaymentRouter = require('./routes/PaymentRouter')
 const {jsonParser} = require('./middlewares/index')
 
 const mongoURI = process.env.MONGO_URI;
+const axios = require('axios');
+
 
 const app = express();
 const PORT = 9092;
@@ -21,7 +23,17 @@ connectMongoDB(mongoURI)
 
 app.use(jsonParser());
 
-app.use(cors({ origin: 'https://www.uni-byte.tech', credentials: true }));
+app.use(cors({ origin: ['https://www.uni-byte.tech', 'http://localhost:5173'], credentials: true }));
+
+
+setInterval(async () => {
+    try {
+        const res = await axios.get('http://corn-job.org/');
+    } catch (err) {
+        console.error(`Failed to ping corn-job.org:`, err.message);
+    }
+}, 2 * 60 * 1000); // 2 minutes
+
 
 app.use("/user",  UserRouter)
 
