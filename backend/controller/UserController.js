@@ -106,8 +106,6 @@ async function getAllStudents(req, res) {
 }
 
 
-
-
 module.exports = {
     getUser,
     getPurchaseHistory,
