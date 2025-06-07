@@ -20,7 +20,7 @@ connectMongoDB(mongoURI)
 
 app.use(jsonParser());
 
-app.use(cors({ origin: 'https://www.uni-byte.tech', credentials: true }));
+app.use(cors({ origin: ['https://www.uni-byte.tech', 'http://localhost:5173'], credentials: true }));
 
 app.use("/user",  UserRouter)
 
