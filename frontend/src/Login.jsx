@@ -27,7 +27,7 @@ function Login() {
       localStorage.setItem("userName", userName);
       localStorage.setItem("role", role);
       console.log("Login successful:", response.data);
-      
+
       navigate("/dashboard");
     } catch (err) {
       setError("Login failed. Please check your credentials.");
@@ -57,9 +57,12 @@ function Login() {
             </p>
           </div>
 
-          <form className="flex mt-8 flex-col items-center" method="post" onSubmit={handleSubmit}>
+          <form className="flex mt-8 flex-col items-center" method="post">
             <div className="flex flex-col w-full max-w-[450px] mb-5">
-              <label htmlFor="username" className="font-semibold text-base md:text-lg mb-2">
+              <label
+                htmlFor="username"
+                className="font-semibold text-base md:text-lg mb-2"
+              >
                 Username
               </label>
               <input
@@ -74,7 +77,10 @@ function Login() {
             </div>
 
             <div className="flex flex-col w-full max-w-[450px] mb-5">
-              <label htmlFor="password" className="font-semibold text-base md:text-lg mb-2">
+              <label
+                htmlFor="password"
+                className="font-semibold text-base md:text-lg mb-2"
+              >
                 Password
               </label>
               <input
@@ -88,24 +94,25 @@ function Login() {
               />
             </div>
 
-
             {error && (
               <div className="text-red-500 mb-3 w-full max-w-[450px] text-sm">
                 {error}
               </div>
             )}
 
-            <input
+            <Link
               type="submit"
-              value="Sign In"
-              className={`w-full max-w-[450px] h-12 md:h-14 text-white text-base md:text-lg bg-blue-500 rounded-md cursor-pointer transition-transform hover:bg-blue-600 hover:shadow ${
+              className={`w-full max-w-[450px] h-12 md:h-14 text-white text-base flex justify-center items-center md:text-lg bg-blue-500 rounded-md cursor-pointer transition-transform hover:bg-blue-600 hover:shadow ${
                 signedClick ? "scale-95" : ""
               }`}
               onClick={() => {
                 setSignedClick(true);
+
                 setTimeout(() => setSignedClick(false), 150);
               }}
-            />
+            >
+              Sign In
+            </Link>
 
             <div className="flex items-center gap-2 my-5 w-full max-w-[450px]">
               <div className="flex-1 border-t border-gray-400"></div>

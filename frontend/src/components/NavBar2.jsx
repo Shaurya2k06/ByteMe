@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, User, ChevronDown } from "lucide-react";
 
@@ -7,9 +6,8 @@ function NavBar2() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const userName = localStorage.getItem("userName")
+  const userName = localStorage.getItem("userName");
   const userType = localStorage.getItem("role").toUpperCase();
-
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,8 +67,8 @@ function NavBar2() {
           onClick={() => setDropdownOpen((prev) => !prev)}
         >
           <div className="flex flex-col text-right">
-            <span className={`font-medium text-sm ${textColor}`}>{userName}</span>
-            <span className={`text-xs ${subTextColor}`}>{userType}</span>
+            <span className={`font-medium text-sm ${textColor}`}>username</span>
+            <span className={`text-xs ${subTextColor}`}>type of acc</span>
           </div>
           <User className={`${iconColor}`} size={28} />
           <ChevronDown className={`${iconColor}`} size={20} />

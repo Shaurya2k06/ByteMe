@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router";
 import axios from "axios";
+import { useNavigate } from "react-router";
 
 function Signup() {
   const [userEmail, setuserEmail] = useState("");
@@ -70,7 +71,7 @@ function Signup() {
         </div>
 
         <div className="w-full md:w-1/2 p-5 flex flex-col justify-center">
-          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+          <form className="flex flex-col gap-6">
             <div className="flex flex-col">
               <label htmlFor="userEmail" className="mb-1 text-sm font-medium">
                 Email
@@ -97,9 +98,6 @@ function Signup() {
                 id="username"
                 placeholder="Enter your username"
                 className="bg-gray-100 border border-gray-300 rounded-md px-4 py-3 text-base outline-none transition-all duration-200 hover:shadow-md focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:shadow-lg active:scale-95"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                required
               />
             </div>
 
@@ -113,9 +111,6 @@ function Signup() {
                 id="password"
                 placeholder="Enter your password"
                 className="bg-gray-100 border border-gray-300 rounded-md px-4 py-3 text-base outline-none mb-3 transition-all duration-200 hover:shadow-md focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:shadow-lg active:scale-95"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
               />
               <input
                 type="password"
@@ -123,21 +118,14 @@ function Signup() {
                 id="confirmPassword"
                 placeholder="Re-enter your password"
                 className="bg-gray-100 border border-gray-300 rounded-md px-4 py-3 text-base outline-none transition-all duration-200 hover:shadow-md focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:shadow-lg active:scale-95"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
               />
             </div>
 
             {/* Hidden role input */}
             <input type="hidden" name="role" value={role} readOnly />
 
-            {error && (
-              <div className="text-red-500 text-sm">{error}</div>
-            )}
-            {success && (
-              <div className="text-green-500 text-sm">{success}</div>
-            )}
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+            {success && <div className="text-green-500 text-sm">{success}</div>}
 
             <button
               type="submit"

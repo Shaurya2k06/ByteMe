@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, User, ChevronDown } from "lucide-react";
 
@@ -7,8 +6,8 @@ function NavBar3() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const userName = localStorage.getItem("userName")
-  const userType = localStorage.getItem("role").toUpperCase();
+  const username = localStorage.getItem("userName");
+  const usertype = localStorage.getItem("role").toUpperCase();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -121,9 +120,9 @@ function NavBar3() {
             >
               <div className="flex flex-col text-right">
                 <span className={`font-medium text-sm ${textColor}`}>
-                  {userName}
+                  {username}
                 </span>
-                <span className={`text-xs ${subTextColor}`}>{userType}</span>
+                <span className={`text-xs ${subTextColor}`}>type of acc</span>
               </div>
               <User className={`${iconColor}`} size={28} />
               <ChevronDown className={`${iconColor}`} size={20} />
@@ -187,9 +186,9 @@ function NavBar3() {
               <User className="text-gray-700" size={28} />
               <div className="flex flex-col">
                 <span className="text-gray-700 font-medium text-sm">
-                  {userName}
+                  username
                 </span>
-                <span className="text-gray-500 text-xs">{userType}</span>
+                <span className="text-gray-500 text-xs">type of acc</span>
               </div>
             </div>
 

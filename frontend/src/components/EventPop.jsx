@@ -39,17 +39,13 @@ const AddEventForm = ({ setEvent }) => {
     setSuccess("");
     try {
       const token = localStorage.getItem("jwt");
-      await axios.post(
-        "http://localhost:9092/events/createEvent",
-        formData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-          withCredentials: true,
-        }
-      );
+      await axios.post("http://localhost:9092/events/createEvent", formData, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        withCredentials: true,
+      });
       setSuccess("Event created successfully!");
       setTimeout(() => {
         setShowForm(false);
@@ -91,9 +87,7 @@ const AddEventForm = ({ setEvent }) => {
         </div>
 
         <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
-          {error && (
-            <div className="text-red-500 text-sm mb-2">{error}</div>
-          )}
+          {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
           {success && (
             <div className="text-green-500 text-sm mb-2">{success}</div>
           )}
@@ -117,9 +111,7 @@ const AddEventForm = ({ setEvent }) => {
               <input
                 type="text"
                 value={formData.eventDate}
-                onChange={(e) =>
-                  handleInputChange("eventDate", e.target.value)
-                }
+                onChange={(e) => handleInputChange("eventDate", e.target.value)}
                 placeholder="10/10/2025"
                 className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -153,7 +145,9 @@ const AddEventForm = ({ setEvent }) => {
               <input
                 type="text"
                 value={formData.eventLocation}
-                onChange={(e) => handleInputChange("eventLocation", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("eventLocation", e.target.value)
+                }
                 placeholder="Enter Location"
                 className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -166,7 +160,9 @@ const AddEventForm = ({ setEvent }) => {
             </label>
             <textarea
               value={formData.eventDescription}
-              onChange={(e) => handleInputChange("eventDescription", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("eventDescription", e.target.value)
+              }
               placeholder="Introducing xyz!...."
               rows={3}
               className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
