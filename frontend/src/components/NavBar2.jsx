@@ -7,7 +7,8 @@ function NavBar2() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const userName = localStorage.getItem("userName");
-  const userType = localStorage.getItem("role").toUpperCase();
+  const role = localStorage.getItem("role");
+  const userType = role ? role.toUpperCase() : "GUEST";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -67,7 +68,9 @@ function NavBar2() {
           onClick={() => setDropdownOpen((prev) => !prev)}
         >
           <div className="flex flex-col text-right">
-            <span className={`font-medium text-sm ${textColor}`}>{userName}</span>
+            <span className={`font-medium text-sm ${textColor}`}>
+              {userName}
+            </span>
             <span className={`text-xs ${subTextColor}`}>{userType}</span>
           </div>
           <User className={`${iconColor}`} size={28} />
