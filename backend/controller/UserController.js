@@ -108,15 +108,9 @@ async function getAllStudents(req, res) {
 async function setUserWallet(req, res) {
     try {
         const user = await verifyUserAuth(req);
-        console.log(user)
-        console.log("\n\n\n\n\n\n\n\nn\n\\n\n\\n\\n\n\\n\n\\n\\n\n")
-        console.log(req.body)
         if (!user) return res.status(404).json({ message: 'Log-in to connect wallet' });
         const userId = user._id;
-        console.log("user id : " + userId)
         const { address } = req.body;
-        console.log("user address : " + address)
-
         if (!address) {
             return res.status(400).json({ message: 'Wallet address is required' });
         }
@@ -128,6 +122,7 @@ async function setUserWallet(req, res) {
         return res.status(500).json({ message: 'Internal server error' });
     }
 }
+
 
 module.exports = {
     getUser,
