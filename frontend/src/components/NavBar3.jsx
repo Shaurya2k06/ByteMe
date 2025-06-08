@@ -122,7 +122,7 @@ function NavBar3() {
                 <span className={`font-medium text-sm ${textColor}`}>
                   {username}
                 </span>
-                <span className={`text-xs ${subTextColor}`}>type of acc</span>
+                <span className={`text-xs ${subTextColor}`}>{usertype}</span>
               </div>
               <User className={`${iconColor}`} size={28} />
               <ChevronDown className={`${iconColor}`} size={20} />
@@ -188,7 +188,7 @@ function NavBar3() {
                 <span className="text-gray-700 font-medium text-sm">
                   username
                 </span>
-                <span className="text-gray-500 text-xs">type of acc</span>
+                <span className="text-gray-500 text-xs">{usertype}</span>
               </div>
             </div>
 
