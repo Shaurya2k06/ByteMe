@@ -15,7 +15,7 @@ function Login() {
     setError("");
     try {
       const response = await axios.post(
-          "https://www.uni-byte.tech/login",
+          "https://www.uni-byte.tech/public/login",
           { userName, password },
           {
             headers: { "Content-Type": "application/json" },
