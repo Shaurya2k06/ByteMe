@@ -39,7 +39,7 @@ const AddEventForm = ({ setEvent }) => {
     setSuccess("");
     try {
       const token = localStorage.getItem("jwt");
-      await axios.post("https://www.uni-byte.tech/events/createEvent", formData, {
+      await axios.post("https://byteme-ue8b.onrender.com/events/createEvent", formData, {
         headers: {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),

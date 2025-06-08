@@ -6,10 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="b3e83102-10b3-471f-b523-a19577eea04d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/controller/PublicController.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/controller/PublicController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/controller/UserController.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/controller/UserController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/Login.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/Signup.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/Signup.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/EventPop.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/EventPop.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

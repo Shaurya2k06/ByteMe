@@ -23,7 +23,7 @@ function Signup() {
     }
     try {
       await axios.post(
-        "https://www.uni-byte.tech/public/signup",
+        "https://byteme-ue8b.onrender.com/public/signup",
         {
           userName,
           password,
