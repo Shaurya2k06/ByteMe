@@ -1,5 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import NavBar1 from "./NavBar1";
+import { useMetaMask } from "../hooks/useMetamask";
+import { ethers } from 'ethers';
 import {
   Chart,
   LineElement,
@@ -26,16 +28,163 @@ Chart.register(
 );
 
 const AdminBalance = () => {
+  const { isConnected, account } = useMetaMask();
+  const [balance, setBalance] = useState("0");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const BITS_CONTRACT_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC"; 
+  
+
+  const BITS_ABI = [
+    {
+      "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
+      "name": "balanceOf",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ];
+
+  const fetchBalance = async () => {
+    if (!isConnected || !account || !window.ethereum) {
+      setBalance("0");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+   
+      const network = await provider.getNetwork();
+      console.log("Connected to network:", network.name, network.chainId);
+
+      const contract = new ethers.Contract(
+        BITS_CONTRACT_ADDRESS,
+        BITS_ABI,
+        provider
+      );
+
+      // Fix 5: Add timeout and better error handling
+      const balanceWei = await Promise.race([
+        contract.balanceOf(account),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Request timeout")), 10000)
+        )
+      ]);
+
+      // Convert from wei to tokens (assuming 18 decimals)
+      const balanceFormatted = ethers.utils.formatUnits(balanceWei, 18);
+      
+      // Format for display
+      const balanceNumber = parseFloat(balanceFormatted);
+      setBalance(balanceNumber.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      }));
+
+    } catch (err) {
+      console.error("Detailed error:", err);
+      
+      // More specific error messages
+      let errorMessage = "Failed to fetch balance";
+      if (err.message.includes("timeout")) {
+        errorMessage = "Request timeout";
+      } else if (err.message.includes("network")) {
+        errorMessage = "Network error";
+      } else if (err.message.includes("contract")) {
+        errorMessage = "Contract not found";
+      } else if (err.message.includes("Ethers")) {
+        errorMessage = "Ethers.js not loaded";
+      }
+      
+      setError(errorMessage);
+      setBalance("Error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isConnected && account) {
+      const timer = setTimeout(() => {
+        fetchBalance();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isConnected, account]);
+
+  const handleRefresh = () => {
+    fetchBalance();
+  };
+
   return (
     <div className="flex-1 min-w-[250px] bg-white rounded-lg p-4 shadow-md flex flex-col justify-between gap-2 hover:shadow-2xl transition-all duration-300 h-[200px] sm:h-[221px]">
-      <h3 className="text-[24px] sm:text-[32px] font-semibold text-gray-800 leading-[100%]">
-        Admin Balance
-      </h3>
-      <div className="flex items-center gap-2">
-        <span className="text-[24px] sm:text-[32px] font-bold text-gray-800 leading-[100%]">
-          10,000,000
-        </span>
-        <span className="text-sm sm:text-base text-gray-600">BITS</span>
+      <div className="flex items-center justify-between">
+        <h3 className="text-[24px] sm:text-[32px] font-semibold text-gray-800 leading-[100%]">
+          Admin Balance
+        </h3>
+        <button
+          onClick={handleRefresh}
+          disabled={loading}
+          className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
+          title="Refresh balance"
+        >
+          <svg
+            className={`w-4 h-4 text-gray-600 ${loading ? "animate-spin" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        {!isConnected ? (
+          <div className="text-center">
+            <span className="text-lg text-gray-500">Connect Wallet</span>
+            <p className="text-xs text-gray-400">Connect to view balance</p>
+          </div>
+        ) : loading ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+            <span className="text-sm text-gray-600">Loading...</span>
+          </div>
+        ) : error ? (
+          <div className="text-center">
+            <span className="text-lg text-red-500">Error</span>
+            <p className="text-xs text-red-400">{error}</p>
+            <button 
+              onClick={handleRefresh}
+              className="text-xs text-blue-600 hover:underline mt-1"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-[24px] sm:text-[32px] font-bold text-gray-800 leading-[100%]">
+              {balance}
+            </span>
+            <span className="text-sm sm:text-base text-gray-600">BITS</span>
+          </div>
+        )}
+
+        {isConnected && account && (
+          <p className="text-xs text-gray-400 truncate">
+            {account.slice(0, 6)}...{account.slice(-4)}
+          </p>
+        )}
       </div>
     </div>
   );
