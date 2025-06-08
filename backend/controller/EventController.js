@@ -9,6 +9,7 @@ const JWT_KEY = process.env.JWT_SECRET;
 
 async function createEvent(req, res) {
     try {
+        console.log(req)
         const authHeader = req.headers.authorization;
         if(!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ message: 'Unauthorized, No token provided' });

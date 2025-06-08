@@ -52,8 +52,6 @@ async function signUp(req, res) {
 async function login(req, res) {
     try {
         const body = req.body;
-        console.log("login in")
-        console.log(body)
         console.log(body.userName + " " + body.username)
         console.log(body.password + " " + body.password)
         if(!body.userName || !body.password) {
