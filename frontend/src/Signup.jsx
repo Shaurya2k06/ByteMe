@@ -22,7 +22,7 @@ function Signup() {
     }
     try {
       await axios.post(
-          "https://www.uni-byte.tech/signup",
+          "https://www.uni-byte.tech/public/signup",
           {
             userName,
             password,
