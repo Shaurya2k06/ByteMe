@@ -68,7 +68,6 @@ const AdminBalance = () => {
         provider
       );
 
-      // Fix 5: Add timeout and better error handling
       const balanceWei = await Promise.race([
         contract.balanceOf(account),
         new Promise((_, reject) => 
@@ -76,10 +75,8 @@ const AdminBalance = () => {
         )
       ]);
 
-      // Convert from wei to tokens (assuming 18 decimals)
       const balanceFormatted = ethers.utils.formatUnits(balanceWei, 18);
       
-      // Format for display
       const balanceNumber = parseFloat(balanceFormatted);
       setBalance(balanceNumber.toLocaleString('en-US', {
         minimumFractionDigits: 0,
@@ -295,33 +292,204 @@ const CoinFlow = () => {
 };
 
 const SendTokens = () => {
+  const { isConnected, account } = useMetaMask();
+  const [recipientAddress, setRecipientAddress] = useState('');
+  const [tokenAmount, setTokenAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  const BITS_CONTRACT_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+  
+  const BITS_ABI = [
+    {
+      "inputs": [
+        {"internalType": "address", "name": "to", "type": "address"},
+        {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      ],
+      "name": "transfer",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
+      "name": "balanceOf",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ];
+
+  const validateAddress = (address) => {
+    try {
+      return ethers.utils.isAddress(address);
+    } catch {
+      return false;
+    }
+  };
+
+  const handleSendTokens = async () => {
+    if (!isConnected || !account) {
+      setError('Please connect your wallet first');
+      return;
+    }
+
+    if (!recipientAddress.trim()) {
+      setError('Please enter a recipient address');
+      return;
+    }
+
+    if (!validateAddress(recipientAddress)) {
+      setError('Please enter a valid wallet address');
+      return;
+    }
+
+    if (!tokenAmount || parseFloat(tokenAmount) <= 0) {
+      setError('Please enter a valid token amount');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      
+      const contract = new ethers.Contract(
+        BITS_CONTRACT_ADDRESS,
+        BITS_ABI,
+        signer
+      );
+
+      // Check sender's balance first
+      const balance = await contract.balanceOf(account);
+      const balanceFormatted = parseFloat(ethers.utils.formatUnits(balance, 18));
+      const amountToSend = parseFloat(tokenAmount);
+
+      if (amountToSend > balanceFormatted) {
+        setError(`Insufficient balance. You have ${balanceFormatted.toFixed(2)} BITS`);
+        return;
+      }
+
+      // Convert amount to wei (18 decimals)
+      const amountWei = ethers.utils.parseUnits(tokenAmount, 18);
+
+      // Send the transaction
+      const tx = await contract.transfer(recipientAddress, amountWei);
+      
+      setSuccess('Transaction sent! Waiting for confirmation...');
+      
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      
+      if (receipt.status === 1) {
+        setSuccess(`Successfully sent ${tokenAmount} BITS to ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}`);
+        // Clear form
+        setRecipientAddress('');
+        setTokenAmount('');
+      } else {
+        setError('Transaction failed');
+      }
+
+    } catch (err) {
+      console.error('Send tokens error:', err);
+      
+      let errorMessage = 'Failed to send tokens';
+      if (err.code === 4001) {
+        errorMessage = 'Transaction rejected by user';
+      } else if (err.message.includes('insufficient funds')) {
+        errorMessage = 'Insufficient ETH for gas fees';
+      } else if (err.message.includes('gas')) {
+        errorMessage = 'Gas estimation failed';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearMessages = () => {
+    setError(null);
+    setSuccess(null);
+  };
+
   return (
     <div className="bg-white rounded-lg p-4 shadow-md flex flex-col gap-4 hover:shadow-2xl transition-all duration-300 w-full">
       <div className="flex gap-2 items-center">
         <img src="/telegram.svg" alt="logo" className="w-[27px] h-[27px]" />
         <h3 className="text-lg font-semibold text-gray-800">Send Tokens</h3>
       </div>
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-800">Wallet Address</label>
-          <input
-            type="text"
-            placeholder="Enter wallet address"
-            className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      
+      {!isConnected ? (
+        <div className="text-center py-4">
+          <p className="text-gray-500">Connect your wallet to send tokens</p>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-800">No. of Tokens</label>
-          <input
-            type="number"
-            placeholder="Enter number of tokens"
-            className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-gray-800">Wallet Address</label>
+            <input
+              type="text"
+              placeholder="Enter recipient wallet address"
+              value={recipientAddress}
+              onChange={(e) => {
+                setRecipientAddress(e.target.value);
+                clearMessages();
+              }}
+              className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
+            />
+          </div>
+          
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-gray-800">No. of Tokens</label>
+            <input
+              type="number"
+              placeholder="Enter number of tokens"
+              value={tokenAmount}
+              onChange={(e) => {
+                setTokenAmount(e.target.value);
+                clearMessages();
+              }}
+              className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
+              step="0.01"
+              min="0"
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-2">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-2">
+              <p className="text-green-600 text-sm">{success}</p>
+            </div>
+          )}
+
+          <button 
+            onClick={handleSendTokens}
+            disabled={loading || !recipientAddress || !tokenAmount}
+            className="bg-blue-600 text-white rounded-md p-2 text-base hover:bg-blue-700 active:scale-95 transition-transform duration-100 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                Processing...
+              </>
+            ) : (
+              'SEND'
+            )}
+          </button>
         </div>
-        <button className="bg-blue-600 text-white rounded-md p-2 text-base hover:bg-blue-700 active:scale-95 transition-transform duration-100">
-          SEND
-        </button>
-      </div>
+      )}
     </div>
   );
 };
