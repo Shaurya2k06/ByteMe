@@ -61,8 +61,8 @@ const StudentList = () => {
       </div>
 
       <div className="divide-y divide-gray-100">
-        {students.map((student, index) => (
-          <div
+          {students.slice(0, 6).map((student, index) => (
+              <div
             key={index}
             className="grid grid-cols-3 px-4 py-3 hover:bg-gray-50"
           >
