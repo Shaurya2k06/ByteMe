@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, User, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function NavBar2() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -30,6 +32,13 @@ function NavBar2() {
     };
   }, []);
 
+  const handleLogout = async () => {
+    localStorage.removeItem("userName");
+    localStorage.removeItem("role");
+    localStorage.removeItem("jwt");
+
+    navigate("/");
+  };
   const textColor = isScrolled ? "text-white" : "text-gray-700";
   const subTextColor = isScrolled ? "text-gray-300" : "text-gray-500";
   const iconColor = isScrolled ? "text-white" : "text-gray-700";
@@ -78,26 +87,31 @@ function NavBar2() {
         </div>
 
         <div
-          className={`absolute top-[60px] right-0 ${
-            isScrolled ? "bg-[#222] text-white" : "bg-white text-black"
-          } shadow-lg border rounded-lg w-44 z-50 overflow-hidden transition-all duration-300 transform ${
-            dropdownOpen
-              ? "scale-100 opacity-100"
-              : "scale-95 opacity-0 pointer-events-none"
-          }`}
+            className={`absolute top-[60px] right-0 ${
+                isScrolled ? "bg-[#222] text-white" : "bg-white text-black"
+            } shadow-lg border rounded-lg w-44 z-50 overflow-hidden transition-all duration-300 transform ${
+                dropdownOpen
+                    ? "scale-100 opacity-100"
+                    : "scale-95 opacity-0 pointer-events-none"
+            }`}
         >
           <a href="/" className="block px-4 py-2 hover:bg-gray-100 text-sm">
             Home
           </a>
           <a
-            href="/switch-account"
-            className="block px-4 py-2 hover:bg-gray-100 text-sm"
+              href="/switch-account"
+              className="block px-4 py-2 hover:bg-gray-100 text-sm"
           >
             Switch Account
           </a>
           <a
-            href="/logout"
-            className="block px-4 py-2 hover:bg-gray-100 text-sm"
+              href="#"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogout();
+              }}
+              className="block px-4 py-2 hover:bg-gray-100 text-sm"
           >
             Logout
           </a>
@@ -107,9 +121,9 @@ function NavBar2() {
       {/* Hamburger for Mobile */}
       <div className="md:hidden ml-auto">
         {menuOpen ? (
-          <X
-            size={30}
-            onClick={() => setMenuOpen(false)}
+            <X
+                size={30}
+                onClick={() => setMenuOpen(false)}
             className="cursor-pointer"
           />
         ) : (
@@ -123,31 +137,40 @@ function NavBar2() {
 
       {/* Mobile Dropdown */}
       {menuOpen && (
-        <div className="absolute top-[80px] right-4 w-[90%] bg-white text-black shadow-md rounded-xl p-5 flex flex-col gap-4 md:hidden z-50">
-          {/* Profile */}
-          <div className="flex items-center gap-3">
-            <User className="text-gray-700" size={28} />
-            <div className="flex flex-col">
+          <div
+              className="absolute top-[80px] right-4 w-[90%] bg-white text-black shadow-md rounded-xl p-5 flex flex-col gap-4 md:hidden z-50">
+            {/* Profile */}
+            <div className="flex items-center gap-3">
+              <User className="text-gray-700" size={28}/>
+              <div className="flex flex-col">
               <span className="text-gray-700 font-medium text-sm">
                 {userName}
               </span>
-              <span className="text-gray-500 text-xs">{userType}</span>
+                <span className="text-gray-500 text-xs">{userType}</span>
+              </div>
             </div>
-          </div>
 
-          <a href="/" className="block px-4 py-2 hover:underline text-sm">
-            Home
-          </a>
-          <a
-            href="/switch-account"
-            className="block px-4 py-2 hover:underline text-sm"
-          >
-            Switch Account
-          </a>
-          <a href="/logout" className="block px-4 py-2 hover:underline text-sm">
-            Logout
-          </a>
-        </div>
+            <a href="/" className="block px-4 py-2 hover:underline text-sm">
+              Home
+            </a>
+            <a
+                href="/switch-account"
+                className="block px-4 py-2 hover:underline text-sm"
+            >
+              Switch Account
+            </a>
+            <a
+                href="#"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleLogout();
+                }}
+                className="block px-4 py-2 hover:underline text-sm"
+            >
+              Logout
+            </a>
+          </div>
       )}
     </div>
   );
