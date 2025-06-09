@@ -29,20 +29,20 @@ function TimeLine() {
       title: "Join Events",
       description:
         "Use tokens to register for campus-wide events and unlock experiences",
-      icon: "../public/step4.svg",
+      icon: "/step4.svg",
     },
     {
       step: 5,
       title: "Track & Manage Your Wallet",
       description: "View your balance, history, and coin flow in real time.",
-      icon: "../public/step5.svg",
+      icon: "/step5.svg",
     },
     {
       step: 6,
       title: "Admin & Backend",
       description:
         "Organizers can track transactions, create events, and reward participants easily.",
-      icon: "../public/step6.svg",
+      icon: "/step6.svg",
     },
   ];
 
