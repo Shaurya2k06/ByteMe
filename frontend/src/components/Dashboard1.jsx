@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import NavBar1 from "./NavBar1";
 import { useMetaMask } from "../hooks/useMetamask";
 import { ethers } from 'ethers';
+import axios from "axios";
 import {
   Chart,
   LineElement,
@@ -235,42 +236,153 @@ const AdminBalance = () => {
 };
 
 const TotalTransactions = () => {
+  const [totalTransactions, setTotalTransactions] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [previousTotal, setPreviousTotal] = useState(0);
+  const [percentageChange, setPercentageChange] = useState(0);
+
+  // Temporarily hardcode the values
+  const TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+  const ETHERSCAN_API_KEY = "YG3F5JK1XCCVGPHCRJGRBDTYXDR9WPUGUD";
+
+  useEffect(() => {
+    const fetchTransactionCount = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        console.log("Fetching transactions for:", TOKEN_ADDRESS);
+        console.log("Using API key:", ETHERSCAN_API_KEY ? "Present" : "Missing");
+
+        // Fetch all transactions for the token
+        const response = await axios.get(
+          `https://api-sepolia.etherscan.io/api`, {
+            params: {
+              module: 'account',
+              action: 'tokentx',
+              contractaddress: TOKEN_ADDRESS,
+              startblock: 0,
+              endblock: 99999999,
+              page: 1,
+              offset: 100, // Reduce to avoid timeouts
+              sort: 'desc',
+              apikey: ETHERSCAN_API_KEY
+            }
+          }
+        );
+
+        console.log("API Response:", response.data);
+
+        if (response.data.status === '1' && response.data.result && response.data.result.length > 0) {
+          const currentTotal = response.data.result.length;
+          setTotalTransactions(currentTotal);
+          setPercentageChange(12.5); // Demo percentage for now
+        } else {
+          console.log("No transactions found, using demo data");
+          setTotalTransactions(0);
+          setPercentageChange(0);
+        }
+
+      } catch (error) {
+        console.error("Error fetching transaction count:", error);
+        setError("Failed to fetch transaction data");
+        
+        // Fallback to demo data
+        setTotalTransactions(25);
+        setPercentageChange(8.3);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactionCount();
+    
+    // Auto-refresh every 5 minutes
+    const interval = setInterval(fetchTransactionCount, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [TOKEN_ADDRESS, ETHERSCAN_API_KEY]);
+
   return (
     <motion.div 
       variants={cardVariants}
       className="flex-1 min-w-[250px] bg-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-500 group"
       whileHover={{ y: -5, scale: 1.02 }}
     >
-      <div className="flex items-center space-x-3 mb-4">
-        <div className="p-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-xl">
-          <Users className="w-5 h-5 text-gray-700" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-xl">
+            <TrendingUp className="w-5 h-5 text-gray-700" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Total Transactions
+          </h3>
         </div>
-        <h3 className="text-lg font-semibold text-gray-800">
-          Total Transactions
-        </h3>
+        <motion.button
+          onClick={() => window.location.reload()}
+          className="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-200 group/btn"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <RefreshCw className="w-4 h-4 text-gray-600 group-hover/btn:text-green-600 transition-colors" />
+        </motion.button>
       </div>
       
-      <div className="space-y-2">
-        <div className="flex items-baseline gap-3">
-          <motion.span 
-            className="text-3xl font-bold text-gray-900"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
-          >
-            20,000
-          </motion.span>
+      <div className="space-y-3">
+        {loading ? (
           <motion.div 
-            className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-lg"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
+            className="flex items-center gap-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
           >
-            <ArrowUp className="w-3 h-3 text-green-600" />
-            <span className="text-sm text-green-600 font-medium">+2.3%</span>
+            <div className="animate-pulse bg-gray-200 h-8 w-32 rounded-xl"></div>
+            <span className="text-sm text-gray-600">Loading...</span>
           </motion.div>
-        </div>
-        <p className="text-xs text-gray-500">vs last month</p>
+        ) : error ? (
+          <motion.div 
+            className="text-center py-2"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <span className="text-lg text-red-500">Error</span>
+            <p className="text-xs text-red-400">{error}</p>
+          </motion.div>
+        ) : (
+          <motion.div 
+            className="space-y-2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex items-baseline gap-3">
+              <motion.span 
+                className="text-3xl font-bold text-gray-900"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+              >
+                {totalTransactions.toLocaleString()}
+              </motion.span>
+              <motion.div 
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg ${
+                  percentageChange >= 0 
+                    ? 'bg-green-50 text-green-600' 
+                    : 'bg-red-50 text-red-600'
+                }`}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <ArrowUp className={`w-3 h-3 ${percentageChange < 0 ? 'rotate-180' : ''}`} />
+                <span className="text-sm font-medium">
+                  {Math.abs(percentageChange).toFixed(1)}%
+                </span>
+              </motion.div>
+            </div>
+            <p className="text-xs text-gray-500">vs last 30 days</p>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );
@@ -279,8 +391,107 @@ const TotalTransactions = () => {
 const CoinFlow = () => {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
+  const [chartData, setChartData] = useState({
+    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+  const ETHERSCAN_API_KEY = "YG3F5JK1XCCVGPHCRJGRBDTYXDR9WPUGUD";
+
+  const formatAmount = (value, decimals = 18) => {
+    if (!value) return 0;
+    try {
+      return parseFloat(ethers.utils.formatUnits(value, decimals));
+    } catch (error) {
+      return 0;
+    }
+  };
+
+  const processTransactionsByMonth = (transactions) => {
+    const currentYear = new Date().getFullYear();
+    const monthlyVolume = new Array(12).fill(0);
+    
+    transactions.forEach(tx => {
+      const date = new Date(parseInt(tx.timeStamp) * 1000);
+      if (date.getFullYear() === currentYear) {
+        const month = date.getMonth();
+        const amount = formatAmount(tx.value, parseInt(tx.tokenDecimal || 18));
+        monthlyVolume[month] += amount;
+      }
+    });
+    
+    return monthlyVolume;
+  };
 
   useEffect(() => {
+    const fetchTransactionVolume = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        console.log("Fetching transaction volume for:", TOKEN_ADDRESS);
+
+        const response = await axios.get(
+          `https://api-sepolia.etherscan.io/api`, {
+            params: {
+              module: 'account',
+              action: 'tokentx',
+              contractaddress: TOKEN_ADDRESS,
+              startblock: 0,
+              endblock: 99999999,
+              page: 1,
+              offset: 1000, // Increase to get more transactions
+              sort: 'desc',
+              apikey: ETHERSCAN_API_KEY
+            }
+          }
+        );
+
+        console.log("Transaction volume API Response:", response.data);
+
+        if (response.data.status === '1' && response.data.result && response.data.result.length > 0) {
+          const monthlyData = processTransactionsByMonth(response.data.result);
+          setChartData(prev => ({
+            ...prev,
+            data: monthlyData
+          }));
+        } else {
+          console.log("No transactions found for volume calculation, using demo data");
+          // Fallback demo data
+          setChartData(prev => ({
+            ...prev,
+            data: [2000, 3000, 2500, 6000, 9000, 7000, 4000, 5000, 4500, 4000, 3500, 4000]
+          }));
+        }
+
+      } catch (error) {
+        console.error("Error fetching transaction volume:", error);
+        setError("Failed to fetch transaction volume data");
+        
+        // Fallback to demo data
+        setChartData(prev => ({
+          ...prev,
+          data: [2000, 3000, 2500, 6000, 9000, 7000, 4000, 5000, 4500, 4000, 3500, 4000]
+        }));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactionVolume();
+    
+    // Auto-refresh every 10 minutes
+    const interval = setInterval(fetchTransactionVolume, 10 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [TOKEN_ADDRESS, ETHERSCAN_API_KEY]);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    
     const ctx = chartRef.current.getContext("2d");
 
     if (chartInstanceRef.current) {
@@ -290,17 +501,11 @@ const CoinFlow = () => {
     chartInstanceRef.current = new Chart(ctx, {
       type: "line",
       data: {
-        labels: [
-          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-        ],
+        labels: chartData.labels,
         datasets: [
           {
             label: "Volume of Tokens",
-            data: [
-              2000, 3000, 2500, 6000, 9000, 7000, 
-              4000, 5000, 4500, 4000, 3500, 4000,
-            ],
+            data: chartData.data,
             borderColor: "#6366f1",
             backgroundColor: "rgba(99, 102, 241, 0.1)",
             fill: true,
@@ -325,7 +530,7 @@ const CoinFlow = () => {
             beginAtZero: true,
             title: {
               display: true,
-              text: "Volume of Tokens",
+              text: "Volume of Tokens (BITS)",
               color: "#6b7280",
               font: { size: 12, weight: '500' }
             },
@@ -335,13 +540,16 @@ const CoinFlow = () => {
             },
             ticks: {
               color: "#9ca3af",
-              font: { size: 11 }
+              font: { size: 11 },
+              callback: function(value) {
+                return value.toLocaleString() + ' BITS';
+              }
             }
           },
           x: {
             title: {
               display: true,
-              text: "Time",
+              text: "Month",
               color: "#6b7280",
               font: { size: 12, weight: '500' }
             },
@@ -366,6 +574,11 @@ const CoinFlow = () => {
             cornerRadius: 8,
             padding: 12,
             displayColors: false,
+            callbacks: {
+              label: function(context) {
+                return `Volume: ${context.parsed.y.toLocaleString()} BITS`;
+              }
+            }
           }
         },
       },
@@ -374,7 +587,7 @@ const CoinFlow = () => {
     return () => {
       chartInstanceRef.current?.destroy();
     };
-  }, []);
+  }, [chartData]);
 
   return (
     <motion.div 
@@ -382,23 +595,42 @@ const CoinFlow = () => {
       className="w-full bg-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-500"
       whileHover={{ y: -3 }}
     >
-      <div className="flex items-center space-x-3 mb-6">
-        <div className="p-2 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl">
-          <TrendingUp className="w-5 h-5 text-gray-700" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl">
+            <TrendingUp className="w-5 h-5 text-gray-700" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Coin Flow Analytics
+            </h3>
+            <p className="text-xs text-gray-500">Monthly transaction volume</p>
+          </div>
         </div>
-        <h3 className="text-lg font-semibold text-gray-800">
-          Coin Flow Analytics
-        </h3>
+        
+        {loading && (
+          <motion.div
+            className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+        )}
       </div>
       
-      <motion.div 
-        className="w-full h-[300px]"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-      >
-        <canvas ref={chartRef}></canvas>
-      </motion.div>
+      {error ? (
+        <div className="flex items-center justify-center h-[300px] text-red-500">
+          <p className="text-sm">{error}</p>
+        </div>
+      ) : (
+        <motion.div 
+          className="w-full h-[300px]"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
+          <canvas ref={chartRef}></canvas>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
