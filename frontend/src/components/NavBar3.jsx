@@ -39,6 +39,13 @@ function NavBar3() {
   // Underline animation classes for links
   // Using tailwind with before pseudo-element won't work directly, so we add custom CSS below
 
+  const handleLogout = async () => {
+    localStorage.removeItem("userName");
+    localStorage.removeItem("role");
+    localStorage.removeItem("jwt");
+    navigate("/");
+  };
+
   return (
     <>
       <style>
@@ -154,12 +161,12 @@ function NavBar3() {
               >
                 Switch Account
               </a>
-              <a
-                href="/logout"
-                className={`block px-4 py-2 ${hoverBg} text-sm underline-animated`}
+              <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
               >
                 Logout
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -225,9 +232,12 @@ function NavBar3() {
             >
               Switch Account
             </a>
-            <a href="/logout" className="block text-sm underline-animated">
+            <button
+                onClick={handleLogout}
+                className="block w-full text-left px-4 py-2 hover:underline text-sm"
+            >
               Logout
-            </a>
+            </button>
           </div>
         )}
       </div>
