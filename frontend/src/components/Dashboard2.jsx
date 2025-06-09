@@ -1,15 +1,39 @@
 import React from "react";
 import { ChevronRight, Users } from "lucide-react";
+import axios from "axios";
+import { useEffect, useState } from "react";
+const token = localStorage.getItem("jwt");
 
 // Student List Component
 const StudentList = () => {
-  const students = [
-    { username: "whatever@03", key: "0xsdnwhisd...", status: "paid" },
-    { username: "whatever@03", key: "0xsdnwhisd...", status: "unpaid" },
-    { username: "whatever@03", key: "0xsdnwhisd...", status: "paid" },
-    { username: "whatever@03", key: "0xsdnwhisd...", status: "paid" },
-    { username: "whatever@03", key: "0xsdnwhisd...", status: "paid" },
-  ];
+    const [students, setStudents] = useState([]);
+
+    useEffect(() => {
+        const fetchStudents = async () => {
+            try {
+                const response = await axios.get("https://byteme-ue8b.onrender.com/user/allStudents", {
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token && { Authorization: `Bearer ${token}` }),
+                    },
+                    withCredentials: true,
+                });
+
+                const mappedStudents = response.data.students.map((student) => ({
+                    username: student.userName,
+                    key: student.walletAddress,
+                    status: student.feeStatus ? "paid" : "unpaid",
+                }));
+
+                // console.log(mappedStudents)
+                setStudents(mappedStudents);
+            } catch (error) {
+                console.error("Error fetching students:", error);
+            }
+        };
+
+        fetchStudents();
+    }, []);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 px-3 py-3 hover:shadow-lg transition-shadow duration-300">
