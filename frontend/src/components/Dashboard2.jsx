@@ -206,8 +206,8 @@ const TransactionHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const TOKEN_ADDRESS = process.env.REACT_APP_TOKEN_ADDRESS || "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
-  const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY || "demo";
+  const TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+  const ETHERSCAN_API_KEY = "YG3F5JK1XCCVGPHCRJGRBDTYXDR9WPUGUD";
 
   const formatAddress = (address) => {
     if (!address) return 'N/A';
