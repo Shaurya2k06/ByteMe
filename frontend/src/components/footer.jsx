@@ -80,7 +80,7 @@ function Footer() {
                 { to: "/dashboard", label: "Dashboard" },
                 { to: "/events", label: "Events" },
                 { to: "/marketplace", label: "Marketplace" },
-                { to: "/support", label: "Support" }
+                { to: "/about", label: "About" }
               ].map((link, index) => (
                 <Link
                   key={index}
@@ -171,7 +171,7 @@ function Footer() {
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <span>Made with</span>
               <Heart className="w-4 h-4 text-red-500 animate-pulse" />
-              <span>for students</span>
+              <span>by Team ByteMe</span>
             </div>
           </div>
         </div>

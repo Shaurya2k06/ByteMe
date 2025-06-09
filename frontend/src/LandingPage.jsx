@@ -10,10 +10,12 @@ function LandingPage() {
   return (
     <div>
       <NavBar1 />
-      <LandingPage1 />
-      <FeaturesComponent />
-      <TimeLine />
-      <Footer />
+      <div className="pt-17">
+        <LandingPage1 />
+        <FeaturesComponent />
+        <TimeLine />
+        <Footer />
+      </div>
     </div>
   );
 }

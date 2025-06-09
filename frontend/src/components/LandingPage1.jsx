@@ -220,8 +220,7 @@ function LandingPage1() {
         </div>
       </div>
 
-      {/* Bottom decoration */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+     
     </div>
   );
 }
