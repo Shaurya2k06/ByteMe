@@ -1,9 +1,11 @@
 import React from "react";
 import { Search } from "lucide-react";
 import NavBar3 from "./components/NavBar3";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 // Card Component
-const ShopCard = () => {
+const ShopCard = ({data}) => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-200">
       <div className="relative w-full h-40 bg-gray-200 flex items-center justify-center">
@@ -17,12 +19,16 @@ const ShopCard = () => {
       </div>
 
       <div className="p-4 flex flex-col gap-1">
-        <h3 className="font-bold text-base text-black">Red Sauce Pasta</h3>
+        <h3 className="font-bold text-base text-black">
+          {data?.itemName || "Red Sauce Pasta"}
+        </h3>
         <p className="text-xs text-gray-500 leading-snug">
-          Experience Italy’s classic tangy & cheesy flavor in every bite.
+          {data?.itemDescription || "Experience Italy’s classic tangy & cheesy flavor in every bite."}
         </p>
         <div className="flex justify-between items-center mt-2">
-          <span className="text-[#5264FF] font-bold text-sm">10 BITS</span>
+  <span className="text-[#5264FF] font-bold text-sm">
+    {data?.itemPrice ? `${data.itemPrice} BITS` : "10 BITS"}
+  </span>
           <button className="bg-[#5264FF] text-white text-sm px-4 py-1 rounded-full hover:bg-blue-700 transition">
             get now!
           </button>
@@ -35,7 +41,44 @@ const ShopCard = () => {
 // Main Shop Page Component
 const ShopPage = () => {
   const cards = new Array(9).fill(0); // 9 placeholder cards
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
 
+  useEffect(() => {
+
+    const fetchAllItems = async () => {
+      try {
+        const token = localStorage.getItem("jwt");
+
+        const res = await axios.get("http://localhost:9092/shop/getItems", {
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          withCredentials: true, // optional, include if backend expects cookies
+        });
+        setResults(res.data.items || res.data);
+      } catch (err) {
+        console.error("Error fetching items:", err);
+      }
+    };
+
+    const delayDebounce = setTimeout(() => {
+      if (query.trim() !== "") {
+        axios
+            .get(`http://localhost:9092/shop/search?query=${encodeURIComponent(query)}`)
+            .then((res) => {
+              setResults(res.data); // assuming this returns array of cards
+            })
+            .catch((err) => {
+              console.error("Search error:", err);
+            });
+      } else {
+        fetchAllItems();
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(delayDebounce);
+  }, [query]);
   return (
     <div className="w-full min-h-screen bg-white">
       <NavBar3 />
@@ -56,27 +99,34 @@ const ShopPage = () => {
             </div>
 
             {/* Search Bar */}
-            <div className="flex items-center max-w-md w-full bg-gray-100 rounded-full px-4 py-2 border border-gray-300 focus-within:ring-2 focus-within:ring-blue-400">
-              <Search className="text-gray-500 w-5 h-5" />
+            <div
+                className="flex items-center max-w-md w-full bg-gray-100 rounded-full px-4 py-2 border border-gray-300 focus-within:ring-2 focus-within:ring-blue-400">
+              <Search className="text-gray-500 w-5 h-5"/>
               <input
-                type="text"
-                placeholder="Search anything..."
-                className="flex-1 bg-transparent outline-none px-2 text-sm"
+                  type="text"
+                  placeholder="Search anything..."
+                  className="flex-1 bg-transparent outline-none px-2 text-sm"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
               />
             </div>
           </div>
 
           {/* Right div: image */}
           <div className="flex justify-center items-center w-full lg:w-[40%]">
-            <img src="/shopimage.svg" alt="Illustration" />
+            <img src="/shopimage.svg" alt="Illustration"/>
           </div>
         </div>
 
         {/* Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {cards.map((_, idx) => (
-            <ShopCard key={idx} />
-          ))}
+          {
+            results.length > 0
+              ? results.map((item, idx) => (
+                  <ShopCard key={idx} data={item} />
+              ))
+              : cards.map((_, idx) => <ShopCard key={idx} />
+                )}
         </div>
       </div>
     </div>
