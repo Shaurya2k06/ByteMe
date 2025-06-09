@@ -206,8 +206,8 @@ const TransactionHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
-  const ETHERSCAN_API_KEY = {ETHERSCAN_API_KEY};
+  const TOKEN_ADDRESS = process.env.REACT_APP_TOKEN_ADDRESS || "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+  const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY || "demo";
 
   const formatAddress = (address) => {
     if (!address) return 'N/A';
@@ -216,26 +216,35 @@ const TransactionHistory = () => {
 
   const formatAmount = (value, decimals = 18) => {
     if (!value) return '0';
-    const amount = parseInt(value) / Math.pow(10, decimals);
-    return amount.toFixed(2);
+    try {
+      const amount = parseInt(value) / Math.pow(10, decimals);
+      return amount.toFixed(2);
+    } catch (error) {
+      return '0';
+    }
   };
 
   const getTimeAgo = (timestamp) => {
-    const now = Date.now() / 1000;
-    const diff = now - parseInt(timestamp);
-    
-    if (diff < 60) return `${Math.floor(diff)}s ago`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
+    try {
+      const now = Date.now() / 1000;
+      const diff = now - parseInt(timestamp);
+      
+      if (diff < 60) return `${Math.floor(diff)}s ago`;
+      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+      return `${Math.floor(diff / 86400)}d ago`;
+    } catch (error) {
+      return 'Unknown';
+    }
   };
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         setLoading(true);
+        setError(null);
         
-        // Fetch ERC-20 token transfers
+        // Fetch ERC-20 token transfers from Sepolia testnet
         const response = await axios.get(
           `https://api-sepolia.etherscan.io/api`, {
             params: {
@@ -252,13 +261,15 @@ const TransactionHistory = () => {
           }
         );
 
-        if (response.data.status === '1' && response.data.result) {
-          const formattedTransactions = response.data.result.map((tx, index) => ({
+        console.log("API Response:", response.data);
+
+        if (response.data.status === '1' && response.data.result && response.data.result.length > 0) {
+          const formattedTransactions = response.data.result.map((tx) => ({
             id: `${tx.hash.slice(0, 8)}...${tx.hash.slice(-6)}`,
             hash: tx.hash,
             from: formatAddress(tx.from),
             to: formatAddress(tx.to),
-            amount: `${formatAmount(tx.value, parseInt(tx.tokenDecimal))} ${tx.tokenSymbol}`,
+            amount: `${formatAmount(tx.value, parseInt(tx.tokenDecimal || 18))} ${tx.tokenSymbol || 'BITS'}`,
             time: getTimeAgo(tx.timeStamp),
             status: 'completed',
             blockNumber: tx.blockNumber,
@@ -268,27 +279,18 @@ const TransactionHistory = () => {
           
           setTransactions(formattedTransactions);
         } else {
-          // Fallback to dummy data if no transactions found
-          setTransactions([
-            { 
-              id: "No transactions", 
-              from: "N/A", 
-              to: "N/A", 
-              amount: "0 BITS", 
-              time: "N/A", 
-              status: "none",
-              hash: null
-            }
-          ]);
+          // No transactions found - show empty state
+          setTransactions([]);
         }
       } catch (error) {
         console.error("Error fetching transactions:", error);
-        setError("Failed to fetch transactions");
-        // Fallback to dummy data
+        setError("Failed to fetch transactions from Etherscan API");
+        
+        // Fallback to demo transactions
         setTransactions([
-          { id: "TXN001", from: "0x1234...5678", to: "0x9abc...def0", amount: "150 BITS", time: "2 min ago", status: "completed", hash: "0x1234567890abcdef" },
-          { id: "TXN002", from: "0x2345...6789", to: "0xabcd...ef01", amount: "75 BITS", time: "5 min ago", status: "pending", hash: "0x234567890abcdef1" },
-          { id: "TXN003", from: "0x3456...789a", to: "0xbcde...f012", amount: "200 BITS", time: "8 min ago", status: "completed", hash: "0x34567890abcdef12" },
+          { id: "DEMO001", from: "0x1234...5678", to: "0x9abc...def0", amount: "150 BITS", time: "2 min ago", status: "completed", hash: "0x1234567890abcdef" },
+          { id: "DEMO002", from: "0x2345...6789", to: "0xabcd...ef01", amount: "75 BITS", time: "5 min ago", status: "pending", hash: "0x234567890abcdef1" },
+          { id: "DEMO003", from: "0x3456...789a", to: "0xbcde...f012", amount: "200 BITS", time: "8 min ago", status: "completed", hash: "0x34567890abcdef12" },
         ]);
       } finally {
         setLoading(false);
@@ -301,7 +303,7 @@ const TransactionHistory = () => {
     const interval = setInterval(fetchTransactions, 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [TOKEN_ADDRESS, ETHERSCAN_API_KEY]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -311,8 +313,6 @@ const TransactionHistory = () => {
         return <Clock className="w-3 h-3" />;
       case 'failed':
         return <X className="w-3 h-3" />;
-      case 'none':
-        return <Activity className="w-3 h-3" />;
       default:
         return <Activity className="w-3 h-3" />;
     }
@@ -326,16 +326,14 @@ const TransactionHistory = () => {
         return 'bg-yellow-100 text-yellow-700';
       case 'failed':
         return 'bg-red-100 text-red-700';
-      case 'none':
-        return 'bg-gray-100 text-gray-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
   };
 
   const openInEtherscan = (hash) => {
-    if (hash) {
-      window.open(`https://etherscan.io/tx/${hash}`, '_blank');
+    if (hash && hash !== 'undefined') {
+      window.open(`https://sepolia.etherscan.io/tx/${hash}`, '_blank');
     }
   };
 
@@ -352,7 +350,7 @@ const TransactionHistory = () => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-800">Transaction History</h3>
-            <p className="text-xs text-gray-500">Token: {TOKEN_ADDRESS.slice(0, 8)}...{TOKEN_ADDRESS.slice(-6)}</p>
+            <p className="text-xs text-gray-500">Token: {TOKEN_ADDRESS.slice(0, 8)}...{TOKEN_ADDRESS.slice(-6)} (Sepolia)</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -367,7 +365,7 @@ const TransactionHistory = () => {
             className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => window.open(`https://etherscan.io/token/${TOKEN_ADDRESS}`, '_blank')}
+            onClick={() => window.open(`https://sepolia.etherscan.io/token/${TOKEN_ADDRESS}`, '_blank')}
           >
             <span>View on Etherscan</span>
             <ExternalLink className="w-4 h-4" />
@@ -401,6 +399,12 @@ const TransactionHistory = () => {
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             />
           </div>
+        ) : transactions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Activity className="w-12 h-12 text-gray-400 mb-4" />
+            <p className="text-gray-500 text-sm">No transactions found</p>
+            <p className="text-gray-400 text-xs mt-1">Transactions will appear here once they occur</p>
+          </div>
         ) : (
           <AnimatePresence>
             {transactions.map((transaction, index) => (
@@ -415,7 +419,7 @@ const TransactionHistory = () => {
               >
                 <div className="text-xs text-gray-900 text-center font-mono flex items-center justify-center">
                   {transaction.id}
-                  {transaction.hash && (
+                  {transaction.hash && transaction.hash !== 'undefined' && (
                     <ExternalLink className="w-3 h-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                   )}
                 </div>
