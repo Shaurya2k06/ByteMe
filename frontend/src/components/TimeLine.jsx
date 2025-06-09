@@ -8,14 +8,14 @@ function TimeLine() {
       title: "Create Account & Connect Wallet",
       description:
         "Sign up in seconds to get your very own secure Byte wallet.",
-      icon: "../public/step1.svg",
+      icon: "/step1.svg",
     },
     {
       step: 2,
       title: "Get your Tokens",
       description:
         "Earn or buy tokens through events, tasks, or the marketplace.",
-      icon: "../public/step2.svg",
+      icon: "/step2.svg",
     },
     {
       step: 3,
