@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronRight, Users, Calendar, Plus, TrendingUp, Clock, Check, X, Activity } from "lucide-react";
+import { ChevronRight, Users, Calendar, Plus, TrendingUp, Clock, Check, X, Activity, ExternalLink } from "lucide-react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -202,13 +202,106 @@ const ImagePlaceholder = () => {
 
 // Transaction History Component
 const TransactionHistory = () => {
-  const [transactions] = useState([
-    { id: "TXN001", from: "alice.eth", to: "bob.eth", amount: "150 BITS", time: "2 min ago", status: "completed" },
-    { id: "TXN002", from: "charlie.eth", to: "diana.eth", amount: "75 BITS", time: "5 min ago", status: "pending" },
-    { id: "TXN003", from: "eve.eth", to: "frank.eth", amount: "200 BITS", time: "8 min ago", status: "completed" },
-    { id: "TXN004", from: "grace.eth", to: "henry.eth", amount: "95 BITS", time: "12 min ago", status: "failed" },
-    { id: "TXN005", from: "ivan.eth", to: "judy.eth", amount: "300 BITS", time: "15 min ago", status: "completed" },
-  ]);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+  const ETHERSCAN_API_KEY = {ETHERSCAN_API_KEY};
+
+  const formatAddress = (address) => {
+    if (!address) return 'N/A';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const formatAmount = (value, decimals = 18) => {
+    if (!value) return '0';
+    const amount = parseInt(value) / Math.pow(10, decimals);
+    return amount.toFixed(2);
+  };
+
+  const getTimeAgo = (timestamp) => {
+    const now = Date.now() / 1000;
+    const diff = now - parseInt(timestamp);
+    
+    if (diff < 60) return `${Math.floor(diff)}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch ERC-20 token transfers
+        const response = await axios.get(
+          `https://api-sepolia.etherscan.io/api`, {
+            params: {
+              module: 'account',
+              action: 'tokentx',
+              contractaddress: TOKEN_ADDRESS,
+              startblock: 0,
+              endblock: 99999999,
+              page: 1,
+              offset: 20,
+              sort: 'desc',
+              apikey: ETHERSCAN_API_KEY
+            }
+          }
+        );
+
+        if (response.data.status === '1' && response.data.result) {
+          const formattedTransactions = response.data.result.map((tx, index) => ({
+            id: `${tx.hash.slice(0, 8)}...${tx.hash.slice(-6)}`,
+            hash: tx.hash,
+            from: formatAddress(tx.from),
+            to: formatAddress(tx.to),
+            amount: `${formatAmount(tx.value, parseInt(tx.tokenDecimal))} ${tx.tokenSymbol}`,
+            time: getTimeAgo(tx.timeStamp),
+            status: 'completed',
+            blockNumber: tx.blockNumber,
+            gasUsed: tx.gasUsed,
+            gasPrice: tx.gasPrice
+          }));
+          
+          setTransactions(formattedTransactions);
+        } else {
+          // Fallback to dummy data if no transactions found
+          setTransactions([
+            { 
+              id: "No transactions", 
+              from: "N/A", 
+              to: "N/A", 
+              amount: "0 BITS", 
+              time: "N/A", 
+              status: "none",
+              hash: null
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        setError("Failed to fetch transactions");
+        // Fallback to dummy data
+        setTransactions([
+          { id: "TXN001", from: "0x1234...5678", to: "0x9abc...def0", amount: "150 BITS", time: "2 min ago", status: "completed", hash: "0x1234567890abcdef" },
+          { id: "TXN002", from: "0x2345...6789", to: "0xabcd...ef01", amount: "75 BITS", time: "5 min ago", status: "pending", hash: "0x234567890abcdef1" },
+          { id: "TXN003", from: "0x3456...789a", to: "0xbcde...f012", amount: "200 BITS", time: "8 min ago", status: "completed", hash: "0x34567890abcdef12" },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchTransactions, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -218,6 +311,8 @@ const TransactionHistory = () => {
         return <Clock className="w-3 h-3" />;
       case 'failed':
         return <X className="w-3 h-3" />;
+      case 'none':
+        return <Activity className="w-3 h-3" />;
       default:
         return <Activity className="w-3 h-3" />;
     }
@@ -231,8 +326,16 @@ const TransactionHistory = () => {
         return 'bg-yellow-100 text-yellow-700';
       case 'failed':
         return 'bg-red-100 text-red-700';
+      case 'none':
+        return 'bg-gray-100 text-gray-700';
       default:
         return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const openInEtherscan = (hash) => {
+    if (hash) {
+      window.open(`https://etherscan.io/tx/${hash}`, '_blank');
     }
   };
 
@@ -247,69 +350,106 @@ const TransactionHistory = () => {
           <div className="p-2 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl">
             <TrendingUp className="w-5 h-5 text-gray-700" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800">Transaction History</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Transaction History</h3>
+            <p className="text-xs text-gray-500">Token: {TOKEN_ADDRESS.slice(0, 8)}...{TOKEN_ADDRESS.slice(-6)}</p>
+          </div>
         </div>
-        <motion.button 
-          className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <span>View All</span>
-          <ChevronRight className="w-4 h-4" />
-        </motion.button>
+        <div className="flex items-center space-x-2">
+          {loading && (
+            <motion.div
+              className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            />
+          )}
+          <motion.button 
+            className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => window.open(`https://etherscan.io/token/${TOKEN_ADDRESS}`, '_blank')}
+          >
+            <span>View on Etherscan</span>
+            <ExternalLink className="w-4 h-4" />
+          </motion.button>
+        </div>
       </div>
 
+      {error && (
+        <div className="p-4 bg-red-50 border-b border-red-200">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="grid grid-cols-5 p-4 bg-gray-50/50 border-b border-gray-200/30">
+      <div className="grid grid-cols-6 p-4 bg-gray-50/50 border-b border-gray-200/30">
         <div className="text-sm font-medium text-gray-700 text-center">Transaction ID</div>
         <div className="text-sm font-medium text-gray-700 text-center">From</div>
         <div className="text-sm font-medium text-gray-700 text-center">To</div>
         <div className="text-sm font-medium text-gray-700 text-center">Amount</div>
+        <div className="text-sm font-medium text-gray-700 text-center">Time</div>
         <div className="text-sm font-medium text-gray-700 text-center">Status</div>
       </div>
 
       {/* Content */}
-      <div className="divide-y divide-gray-100/50">
-        <AnimatePresence>
-          {transactions.map((transaction, index) => (
+      <div className="divide-y divide-gray-100/50 max-h-80 overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
             <motion.div
-              key={transaction.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="grid grid-cols-5 p-4 hover:bg-gray-50/50 transition-colors duration-200 group"
-              whileHover={{ scale: 1.01 }}
-            >
-              <div className="text-sm text-gray-900 text-center font-mono">
-                {transaction.id}
-              </div>
-              <div className="text-sm text-gray-600 text-center truncate">
-                {transaction.from}
-              </div>
-              <div className="text-sm text-gray-600 text-center truncate">
-                {transaction.to}
-              </div>
-              <div className="text-sm font-medium text-gray-900 text-center">
-                {transaction.amount}
-              </div>
-              <div className="flex justify-center">
-                <motion.span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  {getStatusIcon(transaction.status)}
-                  <span className="ml-1 capitalize">{transaction.status}</span>
-                </motion.span>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+        ) : (
+          <AnimatePresence>
+            {transactions.map((transaction, index) => (
+              <motion.div
+                key={transaction.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="grid grid-cols-6 p-4 hover:bg-gray-50/50 transition-colors duration-200 group cursor-pointer"
+                whileHover={{ scale: 1.01 }}
+                onClick={() => openInEtherscan(transaction.hash)}
+              >
+                <div className="text-xs text-gray-900 text-center font-mono flex items-center justify-center">
+                  {transaction.id}
+                  {transaction.hash && (
+                    <ExternalLink className="w-3 h-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+                <div className="text-xs text-gray-600 text-center truncate font-mono">
+                  {transaction.from}
+                </div>
+                <div className="text-xs text-gray-600 text-center truncate font-mono">
+                  {transaction.to}
+                </div>
+                <div className="text-xs font-medium text-gray-900 text-center">
+                  {transaction.amount}
+                </div>
+                <div className="text-xs text-gray-500 text-center">
+                  {transaction.time}
+                </div>
+                <div className="flex justify-center">
+                  <motion.span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    {getStatusIcon(transaction.status)}
+                    <span className="ml-1 capitalize">{transaction.status}</span>
+                  </motion.span>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
       </div>
 
       {/* Footer with timestamp */}
       <div className="p-4 bg-gray-50/30 border-t border-gray-200/30">
         <p className="text-xs text-gray-500 text-center">
-          Last updated: {new Date().toLocaleTimeString()}
+          Last updated: {new Date().toLocaleTimeString()} • Auto-refresh every 30s
         </p>
       </div>
     </motion.div>
