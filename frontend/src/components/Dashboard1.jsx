@@ -14,7 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Check, Copy, LogOut, Wallet, ChevronDown } from "lucide-react";
+import { Check, Copy, LogOut, Wallet, ChevronDown, RefreshCw, Send, TrendingUp, Users, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -30,6 +30,26 @@ Chart.register(
   Legend
 );
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+};
+
 const AdminBalance = () => {
   const { isConnected, account } = useMetaMask();
   const [balance, setBalance] = useState("0");
@@ -38,7 +58,6 @@ const AdminBalance = () => {
 
   const BITS_CONTRACT_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC"; 
   
-
   const BITS_ABI = [
     {
       "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
@@ -59,9 +78,7 @@ const AdminBalance = () => {
       setLoading(true);
       setError(null);
 
-
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-   
       const network = await provider.getNetwork();
       console.log("Connected to network:", network.name, network.chainId);
 
@@ -89,7 +106,6 @@ const AdminBalance = () => {
     } catch (err) {
       console.error("Detailed error:", err);
       
-      // More specific error messages
       let errorMessage = "Failed to fetch balance";
       if (err.message.includes("timeout")) {
         errorMessage = "Request timeout";
@@ -122,87 +138,141 @@ const AdminBalance = () => {
   };
 
   return (
-    <div className="flex-1 min-w-[250px] bg-white rounded-lg p-4 shadow-md flex flex-col justify-between gap-2 hover:shadow-2xl transition-all duration-300 h-[200px] sm:h-[221px]">
-      <div className="flex items-center justify-between">
-        <h3 className="text-[24px] sm:text-[32px] font-semibold text-gray-800 leading-[100%]">
-          Admin Balance
-        </h3>
-        <button
+    <motion.div 
+      variants={cardVariants}
+      className="flex-1 min-w-[250px] bg-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-500 group"
+      whileHover={{ y: -5, scale: 1.02 }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl">
+            <Wallet className="w-5 h-5 text-gray-700" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Admin Balance
+          </h3>
+        </div>
+        <motion.button
           onClick={handleRefresh}
           disabled={loading}
-          className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
-          title="Refresh balance"
+          className="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-200 group/btn"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
         >
-          <svg
-            className={`w-4 h-4 text-gray-600 ${loading ? "animate-spin" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-        </button>
+          <RefreshCw className={`w-4 h-4 text-gray-600 group-hover/btn:text-blue-600 transition-colors ${loading ? "animate-spin" : ""}`} />
+        </motion.button>
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="space-y-3">
         {!isConnected ? (
-          <div className="text-center">
-            <span className="text-lg text-gray-500">Connect Wallet</span>
-            <p className="text-xs text-gray-400">Connect to view balance</p>
-          </div>
+          <motion.div 
+            className="text-center py-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <span className="text-gray-500 text-lg">Connect Wallet</span>
+            <p className="text-xs text-gray-400 mt-1">Connect to view balance</p>
+          </motion.div>
         ) : loading ? (
-          <div className="flex items-center gap-2">
-            <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+          <motion.div 
+            className="flex items-center gap-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="animate-pulse bg-gray-200 h-8 w-32 rounded-xl"></div>
             <span className="text-sm text-gray-600">Loading...</span>
-          </div>
+          </motion.div>
         ) : error ? (
-          <div className="text-center">
+          <motion.div 
+            className="text-center py-2"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
             <span className="text-lg text-red-500">Error</span>
             <p className="text-xs text-red-400">{error}</p>
-            <button 
+            <motion.button 
               onClick={handleRefresh}
-              className="text-xs text-blue-600 hover:underline mt-1"
+              className="text-xs text-blue-600 hover:underline mt-2"
+              whileHover={{ scale: 1.05 }}
             >
               Retry
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         ) : (
-          <div className="flex items-center gap-2">
-            <span className="text-[24px] sm:text-[32px] font-bold text-gray-800 leading-[100%]">
-              {balance}
-            </span>
-            <span className="text-sm sm:text-base text-gray-600">BITS</span>
-          </div>
-        )}
-
-        {isConnected && account && (
-          <p className="text-xs text-gray-400 truncate">
-            {account.slice(0, 6)}...{account.slice(-4)}
-          </p>
+          <motion.div 
+            className="space-y-2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex items-baseline gap-2">
+              <motion.span 
+                className="text-3xl font-bold text-gray-900"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+              >
+                {balance}
+              </motion.span>
+              <span className="text-sm text-gray-600 font-medium">BITS</span>
+            </div>
+            
+            {account && (
+              <motion.p 
+                className="text-xs text-gray-400 font-mono bg-gray-50 px-2 py-1 rounded-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                {account.slice(0, 6)}...{account.slice(-4)}
+              </motion.p>
+            )}
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 const TotalTransactions = () => {
   return (
-    <div className="flex-1 min-w-[250px] bg-white rounded-lg p-4 shadow-md flex flex-col justify-between gap-2 hover:shadow-2xl transition-all duration-300 h-[200px] sm:h-[221px]">
-      <h3 className="text-[24px] sm:text-[32px] font-semibold text-gray-800 leading-[100%]">
-        Total Transactions
-      </h3>
-      <div className="flex items-center gap-2">
-        <span className="text-[24px] sm:text-[32px] font-bold text-gray-800 leading-[100%]">
-          20,000
-        </span>
-        <span className="text-sm sm:text-base text-green-600">+2.3%</span>
+    <motion.div 
+      variants={cardVariants}
+      className="flex-1 min-w-[250px] bg-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-500 group"
+      whileHover={{ y: -5, scale: 1.02 }}
+    >
+      <div className="flex items-center space-x-3 mb-4">
+        <div className="p-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-xl">
+          <Users className="w-5 h-5 text-gray-700" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-800">
+          Total Transactions
+        </h3>
       </div>
-    </div>
+      
+      <div className="space-y-2">
+        <div className="flex items-baseline gap-3">
+          <motion.span 
+            className="text-3xl font-bold text-gray-900"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+          >
+            20,000
+          </motion.span>
+          <motion.div 
+            className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-lg"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <ArrowUp className="w-3 h-3 text-green-600" />
+            <span className="text-sm text-green-600 font-medium">+2.3%</span>
+          </motion.div>
+        </div>
+        <p className="text-xs text-gray-500">vs last month</p>
+      </div>
+    </motion.div>
   );
 };
 
@@ -221,55 +291,82 @@ const CoinFlow = () => {
       type: "line",
       data: {
         labels: [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
+          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
         ],
         datasets: [
           {
             label: "Volume of Tokens",
             data: [
-              2000, 3000, 2500, 6000, 9000, 7000, 4000, 5000, 4500, 4000, 3500,
-              4000,
+              2000, 3000, 2500, 6000, 9000, 7000, 
+              4000, 5000, 4500, 4000, 3500, 4000,
             ],
-            borderColor: "#007bff",
-            backgroundColor: "rgba(0, 123, 255, 0.1)",
+            borderColor: "#6366f1",
+            backgroundColor: "rgba(99, 102, 241, 0.1)",
             fill: true,
             tension: 0.4,
+            pointBackgroundColor: "#6366f1",
+            pointBorderColor: "#ffffff",
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
           },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index',
+        },
         scales: {
           y: {
             beginAtZero: true,
             title: {
               display: true,
               text: "Volume of Tokens",
+              color: "#6b7280",
+              font: { size: 12, weight: '500' }
             },
+            grid: {
+              color: "#f3f4f6",
+              drawBorder: false,
+            },
+            ticks: {
+              color: "#9ca3af",
+              font: { size: 11 }
+            }
           },
           x: {
             title: {
               display: true,
               text: "Time",
+              color: "#6b7280",
+              font: { size: 12, weight: '500' }
             },
+            grid: {
+              color: "#f3f4f6",
+              drawBorder: false,
+            },
+            ticks: {
+              color: "#9ca3af",
+              font: { size: 11 }
+            }
           },
         },
         plugins: {
           legend: {
             display: false,
           },
+          tooltip: {
+            backgroundColor: "rgba(17, 24, 39, 0.9)",
+            titleColor: "#f9fafb",
+            bodyColor: "#f9fafb",
+            cornerRadius: 8,
+            padding: 12,
+            displayColors: false,
+          }
         },
       },
     });
@@ -280,17 +377,29 @@ const CoinFlow = () => {
   }, []);
 
   return (
-    <div className="w-full bg-white rounded-lg p-4 shadow-md flex flex-col gap-2 hover:shadow-2xl transition-all duration-300 min-h-[300px]">
-      <div className="flex gap-2 items-center">
-        <img src="/uparraow.svg" alt="logo" className="w-10 h-10" />
-        <h3 className="text-[24px] sm:text-[32px] font-semibold text-gray-800">
-          Coin Flow
+    <motion.div 
+      variants={cardVariants}
+      className="w-full bg-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-500"
+      whileHover={{ y: -3 }}
+    >
+      <div className="flex items-center space-x-3 mb-6">
+        <div className="p-2 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl">
+          <TrendingUp className="w-5 h-5 text-gray-700" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-800">
+          Coin Flow Analytics
         </h3>
       </div>
-      <div className="w-full h-[250px] sm:h-[300px]">
+      
+      <motion.div 
+        className="w-full h-[300px]"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+      >
         <canvas ref={chartRef}></canvas>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -367,7 +476,6 @@ const SendTokens = () => {
         signer
       );
 
-      // Check sender's balance first
       const balance = await contract.balanceOf(account);
       const balanceFormatted = parseFloat(ethers.utils.formatUnits(balance, 18));
       const amountToSend = parseFloat(tokenAmount);
@@ -377,20 +485,15 @@ const SendTokens = () => {
         return;
       }
 
-      // Convert amount to wei (18 decimals)
       const amountWei = ethers.utils.parseUnits(tokenAmount, 18);
-
-      // Send the transaction
       const tx = await contract.transfer(recipientAddress, amountWei);
       
       setSuccess('Transaction sent! Waiting for confirmation...');
       
-      // Wait for transaction confirmation
       const receipt = await tx.wait();
       
       if (receipt.status === 1) {
         setSuccess(`Successfully sent ${tokenAmount} BITS to ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}`);
-        // Clear form
         setRecipientAddress('');
         setTokenAmount('');
       } else {
@@ -421,21 +524,36 @@ const SendTokens = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-md flex flex-col gap-4 hover:shadow-2xl transition-all duration-300 w-full">
-      <div className="flex gap-2 items-center">
-        <img src="/telegram.svg" alt="logo" className="w-[27px] h-[27px]" />
+    <motion.div 
+      variants={cardVariants}
+      className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-500 w-full"
+      whileHover={{ y: -3 }}
+    >
+      <div className="flex items-center space-x-3 mb-6">
+        <div className="p-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl">
+          <Send className="w-5 h-5 text-gray-700" />
+        </div>
         <h3 className="text-lg font-semibold text-gray-800">Send Tokens</h3>
       </div>
       
       {!isConnected ? (
-        <div className="text-center py-4">
+        <motion.div 
+          className="text-center py-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
           <p className="text-gray-500">Connect your wallet to send tokens</p>
-        </div>
+        </motion.div>
       ) : (
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-gray-800">Wallet Address</label>
-            <input
+        <motion.div 
+          className="space-y-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Wallet Address</label>
+            <motion.input
               type="text"
               placeholder="Enter recipient wallet address"
               value={recipientAddress}
@@ -443,14 +561,15 @@ const SendTokens = () => {
                 setRecipientAddress(e.target.value);
                 clearMessages();
               }}
-              className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300"
               disabled={loading}
+              whileFocus={{ scale: 1.01 }}
             />
           </div>
           
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-gray-800">No. of Tokens</label>
-            <input
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">No. of Tokens</label>
+            <motion.input
               type="number"
               placeholder="Enter number of tokens"
               value={tokenAmount}
@@ -458,54 +577,87 @@ const SendTokens = () => {
                 setTokenAmount(e.target.value);
                 clearMessages();
               }}
-              className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-300"
               disabled={loading}
               step="0.01"
               min="0"
+              whileFocus={{ scale: 1.01 }}
             />
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-2">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                className="bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-xl p-3"
+              >
+                <p className="text-red-600 text-sm">{error}</p>
+              </motion.div>
+            )}
 
-          {success && (
-            <div className="bg-green-50 border border-green-200 rounded-md p-2">
-              <p className="text-green-600 text-sm">{success}</p>
-            </div>
-          )}
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                className="bg-green-50/80 backdrop-blur-sm border border-green-200 rounded-xl p-3"
+              >
+                <p className="text-green-600 text-sm">{success}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <button 
+          <motion.button 
             onClick={handleSendTokens}
             disabled={loading || !recipientAddress || !tokenAmount}
-            className="bg-blue-600 text-white rounded-md p-2 text-base hover:bg-blue-700 active:scale-95 transition-transform duration-100 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl group"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <motion.div
+                  className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                />
                 Processing...
               </>
             ) : (
-              'SEND'
+              <>
+                <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                SEND
+              </>
             )}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
 const ImagePlaceholder = () => {
   return (
-    <div className="w-full flex justify-center items-center py-4">
-      <img
+    <motion.div 
+      className="w-full flex justify-center items-center py-8"
+      variants={cardVariants}
+    >
+      <motion.img
         src="/dashboardimage.svg"
-        alt="logo"
-        className="hover:animate-wave transition-all duration-500 transform origin-bottom h-[150px] sm:h-[200px] object-contain"
+        alt="Dashboard illustration"
+        className="h-[180px] object-contain"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
+        whileHover={{ 
+          scale: 1.05,
+          rotate: 2,
+          transition: { duration: 0.3 }
+        }}
       />
-    </div>
+    </motion.div>
   );
 };
 
@@ -517,9 +669,7 @@ export function ConnectButton() {
   const dropdownRef = useRef(null);
 
   const formatAddress = (address) => {
-    return `${address.substring(0, 6)}...${address.substring(
-      address.length - 4
-    )}`;
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
   const copyToClipboard = () => {
@@ -548,7 +698,6 @@ export function ConnectButton() {
 
   const handleDisconnect = async () => {
     try {
-      console.log("Attempting to disconnect...");
       setShowDropdown(false);
       await disconnect();
       toast.success("Wallet disconnected successfully");
@@ -561,7 +710,6 @@ export function ConnectButton() {
     }
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -583,57 +731,47 @@ export function ConnectButton() {
         className={`
           relative overflow-hidden group
           ${isConnected 
-            ? 'bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-800 hover:bg-white hover:shadow-lg' 
-            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0'
+            ? 'bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-800 hover:bg-white hover:shadow-xl' 
+            : 'bg-gray-900 hover:bg-gray-800 text-white'
           }
-          px-6 py-3 rounded-xl font-medium text-base
+          px-6 py-3 rounded-xl font-medium text-sm
           transition-all duration-300 ease-out
-          hover:scale-105 hover:shadow-xl
+          hover:scale-105 hover:shadow-lg
           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
           flex items-center gap-3 min-w-[180px] max-w-[220px] justify-center
-          whitespace-nowrap
         `}
-        whileHover={{ y: -1 }}
+        whileHover={{ y: -2 }}
         whileTap={{ scale: 0.98 }}
       >
-        {/* Animated background gradient for non-connected state */}
-        {!isConnected && (
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-xl"></div>
-        )}
-        
-        {/* Loading spinner */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-blue-600/90 rounded-xl">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90 rounded-xl">
+            <motion.div 
+              className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            />
           </div>
         )}
 
-        {/* Content */}
         <div className="relative flex items-center gap-3">
-          <div className={`p-1 rounded-lg ${isConnected ? 'bg-gray-100' : 'bg-white/20'}`}>
+          <div className={`p-1.5 rounded-lg ${isConnected ? 'bg-gray-100' : 'bg-white/20'}`}>
             <Wallet className="w-4 h-4" />
           </div>
           
-          <span className="font-medium text-sm lg:text-base truncate">
+          <span className="font-medium truncate">
             {isConnected ? formatAddress(account) : "Connect Wallet"}
           </span>
           
           {isConnected && (
             <ChevronDown 
-              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+              className={`w-4 h-4 transition-transform duration-200 ${
                 showDropdown ? 'rotate-180' : ''
               }`} 
             />
           )}
         </div>
-
-        {/* Shimmer effect for non-connected state */}
-        {!isConnected && (
-          <div className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer"></div>
-        )}
       </motion.button>
 
-      {/* Dropdown */}
       <AnimatePresence>
         {showDropdown && isConnected && (
           <motion.div
@@ -641,55 +779,51 @@ export function ConnectButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-72 bg-white/98 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-200/80 z-50 overflow-hidden"
+            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-3 w-80 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 z-50 overflow-hidden"
           >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 border-b border-gray-200/50">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gray-900 rounded-xl">
                   <Wallet className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Wallet Connected</h3>
+                  <h3 className="font-semibold text-gray-900">Wallet Connected</h3>
                   <p className="text-xs text-gray-600">MetaMask</p>
                 </div>
               </div>
             </div>
 
-            {/* Content */}
-            <div className="p-3 space-y-2.5">
-              {/* Address display */}
+            <div className="p-4 space-y-3">
               <motion.div
-                className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group"
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer group"
                 onClick={copyToClipboard}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-900 mb-0.5">Wallet Address</p>
+                  <p className="text-xs font-medium text-gray-900 mb-1">Wallet Address</p>
                   <p className="text-xs text-gray-600 font-mono truncate">{account}</p>
                 </div>
                 <motion.button 
-                  className="ml-2 p-1.5 rounded-md hover:bg-gray-200 transition-colors"
+                  className="ml-3 p-2 rounded-lg hover:bg-gray-200 transition-colors"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
                   {copied ? (
-                    <Check className="w-3.5 h-3.5 text-green-600" />
+                    <Check className="w-4 h-4 text-green-600" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5 text-gray-600 group-hover:text-blue-600" />
+                    <Copy className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
                   )}
                 </motion.button>
               </motion.div>
 
-              {/* Disconnect button */}
               <motion.button
-                className="w-full flex items-center justify-center gap-2 p-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-all duration-200 group text-sm"
+                className="w-full flex items-center justify-center gap-2 p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-medium transition-all duration-200 group"
                 onClick={handleDisconnect}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
-                <LogOut className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                <LogOut className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 <span>Disconnect Wallet</span>
               </motion.button>
             </div>
@@ -701,20 +835,70 @@ export function ConnectButton() {
 };
 
 const Dashboard = () => {
+  // Floating background elements
+  const floatingElements = Array.from({ length: 6 }, (_, i) => (
+    <motion.div
+      key={i}
+      className="absolute w-2 h-2 bg-gradient-to-r from-gray-300 to-gray-500 rounded-full opacity-20"
+      style={{
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+      }}
+      animate={{
+        y: [-10, 10, -10],
+        x: [-5, 5, -5],
+        scale: [1, 1.2, 1],
+      }}
+      transition={{
+        duration: 3 + Math.random() * 2,
+        repeat: Infinity,
+        delay: Math.random() * 2,
+      }}
+    />
+  ));
+
   return (
-    <div className="w-full min-h-screen flex flex-col bg-gray-100 overflow-x-hidden">
-      <div className="flex flex-col lg:flex-row gap-4 p-4">
-        <div className="w-full lg:w-[70%] flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row gap-10">
-            <AdminBalance />
-            <TotalTransactions />
+    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden pt-20">
+      {/* Floating Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {floatingElements}
+        
+        {/* Geometric shapes */}
+        <motion.div
+          className="absolute top-20 left-20 w-32 h-32 border border-gray-200/50 rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-20 w-24 h-24 border border-gray-300/50 rounded-lg"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Gradient orbs */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-purple-100/20 to-pink-100/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-r from-indigo-100/20 to-cyan-100/20 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative z-10">
+        <motion.div 
+          className="flex flex-col lg:flex-row gap-6 p-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="w-full lg:w-[70%] flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row gap-6">
+              <AdminBalance />
+              <TotalTransactions />
+            </div>
+            <CoinFlow />
           </div>
-          <CoinFlow />
-        </div>
-        <div className="w-full lg:w-[30%] flex flex-col gap-4">
-          <ImagePlaceholder />
-          <SendTokens />
-        </div>
+          <div className="w-full lg:w-[30%] flex flex-col gap-6">
+            <ImagePlaceholder />
+            <SendTokens />
+          </div>
+        </motion.div>
       </div>
     </div>
   );

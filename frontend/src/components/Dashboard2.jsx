@@ -1,209 +1,393 @@
 import React from "react";
-import { ChevronRight, Users } from "lucide-react";
+import { ChevronRight, Users, Calendar, Plus, TrendingUp, Clock, Check, X, Activity } from "lucide-react";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
 const token = localStorage.getItem("jwt");
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+};
 
 // Student List Component
 const StudentList = () => {
-    const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchStudents = async () => {
-            try {
-                const response = await axios.get("https://byteme-ue8b.onrender.com/user/allStudents", {
-                    headers: {
-                        "Content-Type": "application/json",
-                        ...(token && { Authorization: `Bearer ${token}` }),
-                    },
-                    withCredentials: true,
-                });
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await axios.get("https://byteme-ue8b.onrender.com/user/allStudents", {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          withCredentials: true,
+        });
 
-                const mappedStudents = response.data.students.map((student) => ({
-                    username: student.userName,
-                    key: student.walletAddress,
-                    status: student.feeStatus ? "paid" : "unpaid",
-                }));
+        const mappedStudents = response.data.students.map((student) => ({
+          username: student.userName,
+          key: student.walletAddress,
+          status: student.feeStatus ? "paid" : "unpaid",
+        }));
 
-                // console.log(mappedStudents)
-                setStudents(mappedStudents);
-            } catch (error) {
-                console.error("Error fetching students:", error);
-            }
-        };
+        setStudents(mappedStudents);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        fetchStudents();
-    }, []);
+    fetchStudents();
+  }, []);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 px-3 py-3 hover:shadow-lg transition-shadow duration-300">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <Users className="w-4 h-4 text-blue-600" />
+    <motion.div 
+      variants={cardVariants}
+      className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-500 overflow-hidden"
+      whileHover={{ y: -5, scale: 1.01 }}
+    >
+      <div className="flex items-center justify-between p-6 border-b border-gray-200/50">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl">
+            <Users className="w-5 h-5 text-gray-700" />
           </div>
-          <span className="font-medium text-gray-900">List of Students</span>
+          <h3 className="text-lg font-semibold text-gray-800">Students List</h3>
         </div>
-        <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800">
-          view more
+        <motion.button 
+          className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span>View All</span>
           <ChevronRight className="w-4 h-4" />
-        </button>
+        </motion.button>
       </div>
 
-      <div className="grid grid-cols-3 px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <div className="text-sm font-medium text-gray-700 text-center">
-          username
-        </div>
-        <div className="text-sm font-medium text-gray-700 text-center">key</div>
-        <div className="text-sm font-medium text-gray-700 text-center">
-          status
-        </div>
+      {/* Header */}
+      <div className="grid grid-cols-3 p-4 bg-gray-50/50 border-b border-gray-200/30">
+        <div className="text-sm font-medium text-gray-700 text-center">Username</div>
+        <div className="text-sm font-medium text-gray-700 text-center">Wallet Key</div>
+        <div className="text-sm font-medium text-gray-700 text-center">Status</div>
       </div>
 
-      <div className="divide-y divide-gray-100">
-          {students.slice(0, 6).map((student, index) => (
-              <div
-            key={index}
-            className="grid grid-cols-3 px-4 py-3 hover:bg-gray-50"
-          >
-            <div className="text-2xl text-gray-900 font-bold text-center">
-              {student.username}
-            </div>
-            <div className="text-2xl text-gray-600 font-mono text-center">
-              {student.key}
-            </div>
-            <div className="text-center">
-              <span
-                className={`inline-flex items-center px-8 py-2 rounded-full text-xl font-medium w-full max-w-32 justify-center ${
-                  student.status === "paid"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {student.status}
-              </span>
-            </div>
+      {/* Content */}
+      <div className="max-h-80 overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <motion.div
+              className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            />
           </div>
-        ))}
+        ) : (
+          <AnimatePresence>
+            {students.slice(0, 6).map((student, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="grid grid-cols-3 p-4 hover:bg-gray-50/50 transition-colors duration-200 group"
+                whileHover={{ scale: 1.01 }}
+              >
+                <div className="text-sm font-medium text-gray-900 text-center truncate">
+                  {student.username}
+                </div>
+                <div className="text-xs text-gray-600 font-mono text-center truncate">
+                  {student.key ? `${student.key.slice(0, 6)}...${student.key.slice(-4)}` : 'N/A'}
+                </div>
+                <div className="flex justify-center">
+                  <motion.span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                      student.status === "paid"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    {student.status === "paid" ? (
+                      <Check className="w-3 h-3 mr-1" />
+                    ) : (
+                      <X className="w-3 h-3 mr-1" />
+                    )}
+                    {student.status}
+                  </motion.span>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 // Add New Event Component
 const AddNewEvent = ({ setEvent }) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 px-3 py-3 hover:shadow-lg transition-shadow duration-300">
-      <div className="flex items-center gap-3">
-        <img
-          src="/calendar.svg"
-          alt="calendar logo"
-          className="w-[49px] h-[49px]"
-        />
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Add New Event
-        </h3>
+    <motion.div 
+      variants={cardVariants}
+      className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-500 p-6"
+      whileHover={{ y: -5, scale: 1.02 }}
+    >
+      <div className="flex items-center space-x-3 mb-6">
+        <div className="p-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl">
+          <Calendar className="w-5 h-5 text-gray-700" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-800">Add New Event</h3>
       </div>
 
-      <button
-        className="cursor-pointer w-full mt-8 bg-blue-600 text-white rounded-full h-12 flex items-center justify-center hover:bg-blue-700 transition-colors"
+      <motion.button
+        className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl p-4 flex items-center justify-center space-x-2 transition-all duration-300 group shadow-lg hover:shadow-xl"
         onClick={() => setEvent(true)}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
       >
-        <span className="text-xl font-bold">+</span>
-      </button>
-    </div>
+        <motion.div
+          className="p-2 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors"
+          whileHover={{ rotate: 90 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Plus className="w-5 h-5" />
+        </motion.div>
+        <span className="font-medium">Create Event</span>
+      </motion.button>
+    </motion.div>
   );
 };
 
 // Image Component
 const ImagePlaceholder = () => {
   return (
-    <div className="px-3 py-3 flex items-center justify-center h-96">
-      <div className="text-center text-gray-500">
-        <img
-          src="/dashboard2image.svg"
-          alt="image2"
-          className="w-[371px] h-[346px]"
-        />
-      </div>
-    </div>
+    <motion.div 
+      variants={cardVariants}
+      className="flex-1 flex items-center justify-center p-6"
+    >
+      <motion.img
+        src="/dashboard2image.svg"
+        alt="Dashboard illustration"
+        className="max-w-full h-auto max-h-80 object-contain"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
+        whileHover={{ 
+          scale: 1.05,
+          rotate: 2,
+          transition: { duration: 0.3 }
+        }}
+      />
+    </motion.div>
   );
 };
 
-// Transactions Table Component
-const Transactions = () => {
-  const tableData = [
-    ["Cell 1A", "Cell 1B", "Cell 1C", "Cell 1D"],
-    ["Cell 2A", "Cell 2B", "Cell 2C", "Cell 2D"],
-    ["Cell 3A", "Cell 3B", "Cell 3C", "Cell 3D"],
-    ["Cell 4A", "Cell 4B", "Cell 4C", "Cell 4D"],
-    ["Cell 5A", "Cell 5B", "Cell 5C", "Cell 5D"],
-  ];
+// Transaction History Component
+const TransactionHistory = () => {
+  const [transactions] = useState([
+    { id: "TXN001", from: "alice.eth", to: "bob.eth", amount: "150 BITS", time: "2 min ago", status: "completed" },
+    { id: "TXN002", from: "charlie.eth", to: "diana.eth", amount: "75 BITS", time: "5 min ago", status: "pending" },
+    { id: "TXN003", from: "eve.eth", to: "frank.eth", amount: "200 BITS", time: "8 min ago", status: "completed" },
+    { id: "TXN004", from: "grace.eth", to: "henry.eth", amount: "95 BITS", time: "12 min ago", status: "failed" },
+    { id: "TXN005", from: "ivan.eth", to: "judy.eth", amount: "300 BITS", time: "15 min ago", status: "completed" },
+  ]);
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'completed':
+        return <Check className="w-3 h-3" />;
+      case 'pending':
+        return <Clock className="w-3 h-3" />;
+      case 'failed':
+        return <X className="w-3 h-3" />;
+      default:
+        return <Activity className="w-3 h-3" />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-700';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'failed':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
 
   return (
-    <div className="w-full bg-white rounded-lg border border-gray-200 px-3 py-3 mt-5 hover:shadow-lg transition-shadow duration-300">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <h3 className="text-xl font-semibold text-gray-900">
-          Full Width Table
-        </h3>
-      </div>
-
-      <div className="grid grid-cols-4 px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <div className="text-sm font-medium text-gray-700 text-center">
-          Column A
-        </div>
-        <div className="text-sm font-medium text-gray-700 text-center">
-          Column B
-        </div>
-        <div className="text-sm font-medium text-gray-700 text-center">
-          Column C
-        </div>
-        <div className="text-sm font-medium text-gray-700 text-center">
-          Column D
-        </div>
-      </div>
-
-      <div className="divide-y divide-gray-100">
-        {tableData.map((row, rowIndex) => (
-          <div
-            key={rowIndex}
-            className="grid grid-cols-4 px-4 py-3 hover:bg-gray-50"
-          >
-            {row.map((cell, cellIndex) => (
-              <div
-                key={cellIndex}
-                className="text-center text-gray-700 font-medium text-base"
-              >
-                {cell}
-              </div>
-            ))}
+    <motion.div 
+      variants={cardVariants}
+      className="w-full bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-500 overflow-hidden"
+      whileHover={{ y: -3 }}
+    >
+      <div className="flex items-center justify-between p-6 border-b border-gray-200/50">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl">
+            <TrendingUp className="w-5 h-5 text-gray-700" />
           </div>
-        ))}
+          <h3 className="text-lg font-semibold text-gray-800">Transaction History</h3>
+        </div>
+        <motion.button 
+          className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span>View All</span>
+          <ChevronRight className="w-4 h-4" />
+        </motion.button>
       </div>
-    </div>
+
+      {/* Header */}
+      <div className="grid grid-cols-5 p-4 bg-gray-50/50 border-b border-gray-200/30">
+        <div className="text-sm font-medium text-gray-700 text-center">Transaction ID</div>
+        <div className="text-sm font-medium text-gray-700 text-center">From</div>
+        <div className="text-sm font-medium text-gray-700 text-center">To</div>
+        <div className="text-sm font-medium text-gray-700 text-center">Amount</div>
+        <div className="text-sm font-medium text-gray-700 text-center">Status</div>
+      </div>
+
+      {/* Content */}
+      <div className="divide-y divide-gray-100/50">
+        <AnimatePresence>
+          {transactions.map((transaction, index) => (
+            <motion.div
+              key={transaction.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="grid grid-cols-5 p-4 hover:bg-gray-50/50 transition-colors duration-200 group"
+              whileHover={{ scale: 1.01 }}
+            >
+              <div className="text-sm text-gray-900 text-center font-mono">
+                {transaction.id}
+              </div>
+              <div className="text-sm text-gray-600 text-center truncate">
+                {transaction.from}
+              </div>
+              <div className="text-sm text-gray-600 text-center truncate">
+                {transaction.to}
+              </div>
+              <div className="text-sm font-medium text-gray-900 text-center">
+                {transaction.amount}
+              </div>
+              <div className="flex justify-center">
+                <motion.span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  {getStatusIcon(transaction.status)}
+                  <span className="ml-1 capitalize">{transaction.status}</span>
+                </motion.span>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Footer with timestamp */}
+      <div className="p-4 bg-gray-50/30 border-t border-gray-200/30">
+        <p className="text-xs text-gray-500 text-center">
+          Last updated: {new Date().toLocaleTimeString()}
+        </p>
+      </div>
+    </motion.div>
   );
 };
 
 // Main Dashboard Layout
 const Dashboard2 = ({ event, setEvent }) => {
-  return (
-    <div className="w-full h-full bg-gray-50 flex flex-col gap-5 p-5">
-      {/* First Div - Responsive Row/Column */}
-      <div className="flex flex-col md:flex-row gap-5 flex-1">
-        {/* Left Div */}
-        <div className="md:w-[40%] flex flex-col gap-2.5">
-          <AddNewEvent setEvent={setEvent} />
-          <ImagePlaceholder />
-        </div>
+  // Floating background elements
+  const floatingElements = Array.from({ length: 6 }, (_, i) => (
+    <motion.div
+      key={i}
+      className="absolute w-2 h-2 bg-gradient-to-r from-gray-300 to-gray-500 rounded-full opacity-20"
+      style={{
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+      }}
+      animate={{
+        y: [-10, 10, -10],
+        x: [-5, 5, -5],
+        scale: [1, 1.2, 1],
+      }}
+      transition={{
+        duration: 3 + Math.random() * 2,
+        repeat: Infinity,
+        delay: Math.random() * 2,
+      }}
+    />
+  ));
 
-        {/* Right Div */}
-        <div className="md:w-[60%]">
-          <StudentList />
-        </div>
+  return (
+    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden pt-20">
+      {/* Floating Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {floatingElements}
+        
+        {/* Geometric shapes */}
+        <motion.div
+          className="absolute top-20 left-20 w-32 h-32 border border-gray-200/50 rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-20 w-24 h-24 border border-gray-300/50 rounded-lg"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Gradient orbs */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-purple-100/20 to-pink-100/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-r from-indigo-100/20 to-cyan-100/20 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Second Div */}
-      <Transactions />
+      <div className="relative z-10">
+        <motion.div 
+          className="flex flex-col gap-6 p-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* First Row - Responsive Layout */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Left Column */}
+            <div className="w-full lg:w-[40%] flex flex-col gap-6">
+              <AddNewEvent setEvent={setEvent} />
+              <ImagePlaceholder />
+            </div>
+
+            {/* Right Column */}
+            <div className="w-full lg:w-[60%]">
+              <StudentList />
+            </div>
+          </div>
+
+          {/* Second Row - Full Width Transaction History */}
+          <TransactionHistory />
+        </motion.div>
+      </div>
     </div>
   );
 };
