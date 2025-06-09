@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { Button } from "./ui/button";
 import { useMetaMask } from "../hooks/useMetamask";
-import { Check, Copy, LogOut } from "lucide-react";
+import { Check, Copy, LogOut, Wallet, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function ConnectButton() {
   const { isConnected, account, connect, disconnect } = useMetaMask();
   const [showDropdown, setShowDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef(null);
 
   const formatAddress = (address) => {
@@ -25,29 +26,27 @@ export function ConnectButton() {
     }
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (isConnected) {
       setShowDropdown(!showDropdown);
     } else {
-      connect();
+      setIsLoading(true);
+      try {
+        await connect();
+      } catch (error) {
+        console.error("Connection error:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const handleDisconnect = async () => {
     try {
       console.log("Attempting to disconnect...");
-
-      // Close dropdown first
       setShowDropdown(false);
-
-      // Call the disconnect function from the hook
       await disconnect();
-
-      // Show success message
       toast.success("Wallet disconnected successfully");
-
-      // Optional: Force refresh after a short delay
-      // This ensures clean state reset
       setTimeout(() => {
         window.location.reload();
       }, 500);
@@ -72,37 +71,126 @@ export function ConnectButton() {
   }, []);
 
   return (
-    <div className="relative flex md:ml-50" ref={dropdownRef}>
-      <Button
+    <div className="relative flex justify-center w-full" ref={dropdownRef}>
+      <motion.button
         onClick={handleClick}
-        variant={isConnected ? "outline" : "default"}
-        className="flex items-center bg-blue-500 w-[250px] h-[58px] text-[30px] cursor-pointer hover:bg-blue-500 gap-2"
+        disabled={isLoading}
+        className={`
+          relative overflow-hidden group
+          ${isConnected 
+            ? 'bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-800 hover:bg-white hover:shadow-lg' 
+            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0'
+          }
+          px-6 py-3 rounded-xl font-medium text-base
+          transition-all duration-300 ease-out
+          hover:scale-105 hover:shadow-xl
+          disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+          flex items-center gap-3 min-w-[180px] max-w-[220px] justify-center
+          whitespace-nowrap
+        `}
+        whileHover={{ y: -1 }}
+        whileTap={{ scale: 0.98 }}
       >
-        {isConnected ? formatAddress(account) : "Connect Wallet"}
-      </Button>
-
-      {showDropdown && isConnected && (
-        <div className="absolute right-0 mt-2 w-64 rounded-md border bg-background shadow-lg z-10">
-          <div className="p-2">
-            <div
-              className="flex items-center justify-between rounded-md p-2 cursor-pointer hover:bg-muted"
-              onClick={copyToClipboard}
-            >
-              <span className="text-sm font-medium truncate">{account}</span>
-              <button className="ml-2">
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-              </button>
-            </div>
-            <div
-              className="flex items-center rounded-md p-2 cursor-pointer hover:bg-muted mt-1"
-              onClick={handleDisconnect}
-            >
-              <LogOut size={16} className="mr-2" />
-              <span className="text-sm font-medium">Disconnect Wallet</span>
-            </div>
+        {/* Animated background gradient for non-connected state */}
+        {!isConnected && (
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-xl"></div>
+        )}
+        
+        {/* Loading spinner */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-blue-600/90 rounded-xl">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
+        )}
+
+        {/* Content */}
+        <div className="relative flex items-center gap-3">
+          <div className={`p-1 rounded-lg ${isConnected ? 'bg-gray-100' : 'bg-white/20'}`}>
+            <Wallet className="w-4 h-4" />
+          </div>
+          
+          <span className="font-medium text-sm lg:text-base truncate">
+            {isConnected ? formatAddress(account) : "Connect Wallet"}
+          </span>
+          
+          {isConnected && (
+            <ChevronDown 
+              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                showDropdown ? 'rotate-180' : ''
+              }`} 
+            />
+          )}
         </div>
-      )}
+
+        {/* Shimmer effect for non-connected state */}
+        {!isConnected && (
+          <div className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer"></div>
+        )}
+      </motion.button>
+
+      {/* Dropdown */}
+      <AnimatePresence>
+        {showDropdown && isConnected && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-72 bg-white/98 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-200/80 z-50 overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 border-b border-gray-200/50">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
+                  <Wallet className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Wallet Connected</h3>
+                  <p className="text-xs text-gray-600">MetaMask</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-3 space-y-2.5">
+              {/* Address display */}
+              <motion.div
+                className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group"
+                onClick={copyToClipboard}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-gray-900 mb-0.5">Wallet Address</p>
+                  <p className="text-xs text-gray-600 font-mono truncate">{account}</p>
+                </div>
+                <motion.button 
+                  className="ml-2 p-1.5 rounded-md hover:bg-gray-200 transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-green-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5 text-gray-600 group-hover:text-blue-600" />
+                  )}
+                </motion.button>
+              </motion.div>
+
+              {/* Disconnect button */}
+              <motion.button
+                className="w-full flex items-center justify-center gap-2 p-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-all duration-200 group text-sm"
+                onClick={handleDisconnect}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <LogOut className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                <span>Disconnect Wallet</span>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-}
+};
