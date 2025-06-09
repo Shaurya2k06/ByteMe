@@ -52,7 +52,11 @@ function NavBar1() {
           : "bg-white text-black"
       }`}
     >
-      <div className="flex items-center gap-3">
+      <Link 
+        to="/" 
+        className="flex items-center gap-3 cursor-pointer"
+        onClick={() => setActiveLink("home")}
+      >
         <img
           src="/navbarLogo.svg"
           alt="logo"
@@ -65,7 +69,7 @@ function NavBar1() {
         >
           UniByte
         </h1>
-      </div>
+      </Link>
 
       <div className="hidden md:flex items-center gap-20">
         <Link

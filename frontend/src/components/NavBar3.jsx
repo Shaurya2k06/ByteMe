@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, User, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function NavBar3() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const username = localStorage.getItem("userName");
-  const usertype = localStorage.getItem("role").toUpperCase();
+  const usertype = localStorage.getItem("role")?.toUpperCase() || "GUEST";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,7 +75,10 @@ function NavBar3() {
         }`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3">
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
           <img
             src="/navbarLogo.svg"
             alt="logo"

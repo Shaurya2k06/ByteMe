@@ -61,7 +61,10 @@ function NavBar2() {
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3">
+      <div 
+        className="flex items-center gap-3 cursor-pointer"
+        onClick={() => navigate("/")}
+      >
         <img
           src="/navbarLogo.svg"
           alt="logo"
