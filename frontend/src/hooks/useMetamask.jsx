@@ -35,6 +35,10 @@ export function useMetaMask() {
         })
         setChainId(chainId)
         
+        // Store connection state in localStorage
+        localStorage.setItem('metamask_connected', 'true')
+        localStorage.setItem('metamask_account', accounts[0])
+        
         toast.success("Connected to MetaMask successfully!")
       } else {
         toast.error("No accounts found")
@@ -54,11 +58,23 @@ export function useMetaMask() {
     }
   }, [])
 
-  const disconnect = useCallback(() => {
-    setAccount(null)
-    setIsConnected(false)
-    setChainId(null)
-    toast.info("Disconnected from MetaMask")
+  const disconnect = useCallback(async () => {
+    try {
+      // Clear all state
+      setAccount(null)
+      setIsConnected(false)
+      setChainId(null)
+      
+      // Clear localStorage
+      localStorage.removeItem('metamask_connected')
+      localStorage.removeItem('metamask_account')
+      
+      console.log("Wallet disconnected successfully")
+      return Promise.resolve()
+    } catch (error) {
+      console.error("Error during disconnect:", error)
+      return Promise.reject(error)
+    }
   }, [])
 
   const switchNetwork = useCallback(async (targetChainId) => {
@@ -80,11 +96,15 @@ export function useMetaMask() {
     const checkConnection = async () => {
       if (window.ethereum && window.ethereum.isMetaMask) {
         try {
+          // Check localStorage first
+          const wasConnected = localStorage.getItem('metamask_connected')
+          const storedAccount = localStorage.getItem('metamask_account')
+          
           const accounts = await window.ethereum.request({
             method: "eth_accounts"
           })
           
-          if (accounts.length > 0) {
+          if (accounts.length > 0 && wasConnected && storedAccount === accounts[0]) {
             setAccount(accounts[0])
             setIsConnected(true)
             
@@ -92,9 +112,16 @@ export function useMetaMask() {
               method: "eth_chainId"
             })
             setChainId(chainId)
+          } else if (!accounts.length) {
+            // Clear storage if no accounts
+            localStorage.removeItem('metamask_connected')
+            localStorage.removeItem('metamask_account')
           }
         } catch (error) {
           console.error("Error checking connection:", error)
+          // Clear storage on error
+          localStorage.removeItem('metamask_connected')
+          localStorage.removeItem('metamask_account')
         }
       }
     }
@@ -106,10 +133,17 @@ export function useMetaMask() {
       const handleAccountsChanged = (accounts) => {
         console.log('Accounts changed:', accounts)
         if (accounts.length === 0) {
-          disconnect()
+          // User disconnected from MetaMask
+          setAccount(null)
+          setIsConnected(false)
+          setChainId(null)
+          localStorage.removeItem('metamask_connected')
+          localStorage.removeItem('metamask_account')
+          toast.info("MetaMask disconnected")
         } else if (accounts[0] !== account) {
           setAccount(accounts[0])
           setIsConnected(true)
+          localStorage.setItem('metamask_account', accounts[0])
           toast.info("Account changed")
         }
       }
@@ -124,7 +158,11 @@ export function useMetaMask() {
 
       const handleDisconnect = (error) => {
         console.log('MetaMask disconnected:', error)
-        disconnect()
+        setAccount(null)
+        setIsConnected(false)
+        setChainId(null)
+        localStorage.removeItem('metamask_connected')
+        localStorage.removeItem('metamask_account')
       }
 
       // Add event listeners
@@ -141,7 +179,7 @@ export function useMetaMask() {
         }
       }
     }
-  }, [account, disconnect])
+  }, [account])
 
   // Helper function to get network name
   const getNetworkName = useCallback((chainId) => {

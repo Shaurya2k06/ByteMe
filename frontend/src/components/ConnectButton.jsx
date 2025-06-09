@@ -33,9 +33,28 @@ export function ConnectButton() {
     }
   };
 
-  const handleDisconnect = () => {
-    disconnect();
-    setShowDropdown(false);
+  const handleDisconnect = async () => {
+    try {
+      console.log("Attempting to disconnect...");
+
+      // Close dropdown first
+      setShowDropdown(false);
+
+      // Call the disconnect function from the hook
+      await disconnect();
+
+      // Show success message
+      toast.success("Wallet disconnected successfully");
+
+      // Optional: Force refresh after a short delay
+      // This ensures clean state reset
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error("Error disconnecting wallet:", error);
+      toast.error("Failed to disconnect wallet");
+    }
   };
 
   // Close dropdown when clicking outside
