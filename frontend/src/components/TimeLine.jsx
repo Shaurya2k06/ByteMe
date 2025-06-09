@@ -22,7 +22,7 @@ function TimeLine() {
       title: "Explore the Marketplace",
       description:
         "Use your tokens to redeem rewards, tickets, or collectibles.",
-      icon: "../public/step3.svg",
+      icon: "/step3.svg",
     },
     {
       step: 4,

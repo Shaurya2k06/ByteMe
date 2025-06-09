@@ -5,8 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b3e83102-10b3-471f-b523-a19577eea04d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/node_modules/.vite/deps/_metadata.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/node_modules/.vite/deps/_metadata.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/TimeLine.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/TimeLine.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
