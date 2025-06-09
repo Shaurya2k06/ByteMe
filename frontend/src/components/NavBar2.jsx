@@ -39,6 +39,15 @@ function NavBar2() {
 
     navigate("/");
   };
+
+  const handleSwitch = async () => {
+    localStorage.removeItem("userName");
+    localStorage.removeItem("role");
+    localStorage.removeItem("jwt");
+
+    navigate("/login");
+  };
+
   const textColor = isScrolled ? "text-white" : "text-gray-700";
   const subTextColor = isScrolled ? "text-gray-300" : "text-gray-500";
   const iconColor = isScrolled ? "text-white" : "text-gray-700";
@@ -99,7 +108,12 @@ function NavBar2() {
             Home
           </a>
           <a
-              href="/switch-account"
+              href="#"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                handleSwitch();
+              }}
               className="block px-4 py-2 hover:bg-gray-100 text-sm"
           >
             Switch Account
@@ -154,7 +168,12 @@ function NavBar2() {
               Home
             </a>
             <a
-                href="/switch-account"
+                href="#"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSwitch();
+                }}
                 className="block px-4 py-2 hover:underline text-sm"
             >
               Switch Account

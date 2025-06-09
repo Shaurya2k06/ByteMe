@@ -50,7 +50,7 @@ const ShopPage = () => {
       try {
         const token = localStorage.getItem("jwt");
 
-        const res = await axios.get("http://localhost:9092/shop/getItems", {
+        const res = await axios.get("https://byteme-ue8b.onrender.com/shop/getItems", {
           headers: {
             ...(token && { Authorization: `Bearer ${token}` }),
           },
@@ -65,7 +65,7 @@ const ShopPage = () => {
     const delayDebounce = setTimeout(() => {
       if (query.trim() !== "") {
         axios
-            .get(`http://localhost:9092/shop/search?query=${encodeURIComponent(query)}`)
+            .get(`https://byteme-ue8b.onrender.com/shop/search?query=${encodeURIComponent(query)}`)
             .then((res) => {
               setResults(res.data); // assuming this returns array of cards
             })
