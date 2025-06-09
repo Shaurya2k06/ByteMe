@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, User, ChevronDown, Home, RefreshCw, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { ConnectButton } from "./ConnectButton";
 
 function NavBar3() {
   const navigate = useNavigate();
@@ -118,7 +119,6 @@ function NavBar3() {
                 className="text-2xl font-bold tracking-tight"
               >
                 <span className="text-gray-800">UniByte</span>
-
               </motion.h1>
               <motion.p 
                 className="text-xs text-gray-500 font-medium tracking-wider"
@@ -132,7 +132,7 @@ function NavBar3() {
           </motion.div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-4">
             {/* Navigation Links */}
             <nav className="flex items-center space-x-6">
               {navLinks.map((link, index) => (
@@ -166,6 +166,16 @@ function NavBar3() {
                 </motion.a>
               ))}
             </nav>
+
+            {/* Connect Button - Smaller Size */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="scale-75 origin-center"
+            >
+              <ConnectButton />
+            </motion.div>
 
             {/* User Dropdown */}
             <div className="relative" ref={dropdownRef}>
@@ -325,6 +335,11 @@ function NavBar3() {
                     <h3 className="font-semibold text-gray-900">{username || "User"}</h3>
                     <p className="text-xs text-gray-600">{usertype}</p>
                   </div>
+                </div>
+
+                {/* Mobile Connect Button - Keep normal size for mobile */}
+                <div className="px-2">
+                  <ConnectButton />
                 </div>
 
                 {/* Mobile Navigation Links */}

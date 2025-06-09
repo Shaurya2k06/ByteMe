@@ -33,8 +33,13 @@ export function ConnectButton() {
       setIsLoading(true);
       try {
         await connect();
+        toast.success("Wallet connected successfully!");
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       } catch (error) {
         console.error("Connection error:", error);
+        toast.error("Failed to connect wallet");
       } finally {
         setIsLoading(false);
       }
