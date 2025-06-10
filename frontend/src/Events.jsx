@@ -183,9 +183,9 @@ function Events() {
 function EventPosts({ event }) {
   const handleRegister = async () => {
     try {
-      const response = await axios.post(
+      await axios.post(
           "http://localhost:9092/events/joinEvent",
-          { eventId: event.id },
+          {eventId: event.id},
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("jwt")}`,

@@ -4,6 +4,7 @@ import NavBar3 from "./components/NavBar3";
 import { useMetaMask } from "./hooks/useMetamask";
 import { ethers } from 'ethers';
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 
 const StudentDashboard = () => {
   const { isConnected, account } = useMetaMask();
@@ -37,6 +38,9 @@ const StudentDashboard = () => {
   });
   const [successMessage, setSuccessMessage] = useState("");
   const [sendingTokens, setSendingTokens] = useState(false);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState(null);
 
   const BITS_CONTRACT_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
   const ADMIN_ACCOUNT = "0x4f91bd1143168af7268eb08b017ec785c06c0e61";
@@ -357,6 +361,31 @@ const StudentDashboard = () => {
     setSuccessMessage("");
   };
 
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setEventsLoading(true);
+      setEventsError(null);
+      try {
+        const token = localStorage.getItem("jwt");
+        const response = await axios.get("http://localhost:9092/events/getEvent", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        // Sort by eventDate ascending
+        const sorted = response.data.upcoming
+          .slice()
+          .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+        setUpcomingEvents(sorted);
+      } catch (err) {
+        setEventsError("Failed to load events");
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
+  
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Bar */}
@@ -667,29 +696,37 @@ const StudentDashboard = () => {
                     Events This Month
                   </h3>
                   <div className="space-y-4">
-                    <motion.div 
-                      className="p-4 bg-blue-50 rounded-lg"
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      <h4 className="font-semibold text-blue-900">
-                        Fee Payment Due
-                      </h4>
-                      <p className="text-sm text-blue-700">June 19th</p>
-                    </motion.div>
-                    <motion.div 
-                      className="p-4 bg-green-50 rounded-lg"
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      <h4 className="font-semibold text-green-900">Campus Event</h4>
-                      <p className="text-sm text-green-700">June 25th</p>
-                    </motion.div>
-                    <motion.div 
-                      className="p-4 bg-purple-50 rounded-lg"
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      <h4 className="font-semibold text-purple-900">Token Reward</h4>
-                      <p className="text-sm text-purple-700">June 30th</p>
-                    </motion.div>
+                    {eventsLoading ? (
+                      <motion.div className="p-4 bg-gray-50 rounded-lg animate-pulse">
+                        <p className="text-gray-400">Loading events...</p>
+                      </motion.div>
+                    ) : eventsError ? (
+                      <motion.div className="p-4 bg-red-50 rounded-lg">
+                        <p className="text-red-600">{eventsError}</p>
+                      </motion.div>
+                    ) : upcomingEvents.length === 0 ? (
+                      <motion.div className="p-4 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">No upcoming events</p>
+                      </motion.div>
+                    ) : (
+                      upcomingEvents.slice(0, 3).map((event) => (
+                        <motion.div
+                          key={event._id}
+                          className="p-4 bg-blue-50 rounded-lg"
+                          whileHover={{ scale: 1.02 }}
+                        >
+                          <h4 className="font-semibold text-blue-900">
+                            {event.eventName}
+                          </h4>
+                          <p className="text-sm text-blue-700">
+                            {new Date(event.eventDate).toLocaleDateString("en-US", {
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </p>
+                        </motion.div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
