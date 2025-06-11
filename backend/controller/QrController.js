@@ -7,6 +7,7 @@ const {verifyUserAuth} = require("../Service/authService");
 
 async function qrTokenCreation(req, res) {
     try {
+        console.log(req)
         const user = await verifyUserAuth(req);
         if(!user) {
             return res.status(401).json({message : "No user found"});

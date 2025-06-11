@@ -9,6 +9,7 @@ import Dashboard from "./Dashboard.jsx";
 import Shop from "./Shop.jsx";
 import Events from "./Events.jsx";
 import StudentDashboard from "./StudentDashboard.jsx";
+import QrPage from "./QrPage";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/events" element={<Events />} />
         <Route path="/studentDashboard" element={<StudentDashboard />} />
+        <Route path="/generate-qr" element={<QrPage />} />
 
         <Route path="/shop" element={<Shop />} />
       </Routes>
