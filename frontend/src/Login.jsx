@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, User, Lock, ArrowRight, Chrome, AlertCircle, Sparkles } from "lucide-react";
@@ -17,7 +17,7 @@ function Login() {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    
+
     try {
       const response = await axios.post(
         "https://byteme-ue8b.onrender.com/public/login",
@@ -28,12 +28,18 @@ function Login() {
         }
       );
       const { token, role } = response.data;
+      const isAuthenticated = !!token;
       localStorage.setItem("jwt", token);
       localStorage.setItem("userName", userName);
       localStorage.setItem("role", role);
+      localStorage.setItem("isAuthenticated", JSON.stringify(isAuthenticated));
       console.log("Login successful:", response.data);
 
-      navigate("/dashboard");
+      if(role === "dev" || role === "admin") {
+        navigate("/dashboard");
+      } else {
+        navigate("/studentDashboard")
+      }
     } catch (err) {
       setError("Login failed. Please check your credentials.");
     } finally {
@@ -81,6 +87,13 @@ function Login() {
       }}
     />
   ));
+  useEffect(() => {
+    const token = localStorage.getItem("jwt");
+    if (token) {
+      navigate("/", { replace: true });
+    }
+  }, []);
+
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden flex">

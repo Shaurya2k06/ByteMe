@@ -89,7 +89,7 @@ async function getAllStudents(req, res) {
         const user = await verifyUserAuth(req);
         if(!user) return res.status(404).json({message : "User not found"});
 
-        const allStudents = await User.find({role : "user"});
+        const allStudents = await User.find({role : "dev"});
         if(!allStudents || allStudents.length === 0) return res.status(200).json({students: []});
 
         const studentsData = allStudents.map(student => ({
@@ -98,6 +98,7 @@ async function getAllStudents(req, res) {
             feeStatus: student.feeStatus,
         }));
 
+        console.log(studentsData)
         return res.status(200).json({ students: studentsData });
     } catch(err) {
         console.error(err);

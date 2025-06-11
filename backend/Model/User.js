@@ -24,6 +24,10 @@ const userSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
+    qrToken: {
+        type :String,
+        unique : true,
+    },
     events: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Events',

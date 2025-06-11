@@ -2,7 +2,8 @@ const express = require('express')
 const { createEvent,
         eventsRegistration,
         searchEvents,
-        getEvent } = require('../controller/EventController')
+        getRegisteredEvent,
+        getAllEvent} = require('../controller/EventController')
 const authorizedRoles = require('../middlewares/roleAuthenticator')
 
 const router = express.Router();
@@ -13,6 +14,8 @@ router.post("/joinEvent", eventsRegistration)
 
 router.get("/search", searchEvents)
 
-router.get("/getEvent", getEvent)
+router.get("/getEvent", getRegisteredEvent)
+
+router.get("/getAllEvents", getAllEvent)
 
 module.exports = router;
