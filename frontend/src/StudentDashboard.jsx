@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Send, Eye, Clock, Wallet, RefreshCw, CheckCircle, Check } from "lucide-react";
+import { Calendar, Send, Eye, Clock, Wallet, RefreshCw, CheckCircle } from "lucide-react";
 import NavBar3 from "./components/NavBar3";
 import { useMetaMask } from "./hooks/useMetamask";
 import { ethers } from 'ethers';
@@ -352,11 +352,6 @@ const StudentDashboard = () => {
     },
   ];
 
-  const clearMessages = () => {
-    setError(null);
-    setSuccessMessage("");
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Bar */}
@@ -695,131 +690,74 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Send Tokens - Updated with improved styling */}
+            {/* Send Tokens - Updated with better functionality */}
             <motion.div 
-              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300"
+              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
               whileHover={{ y: -2 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl">
-                  <Send className="w-5 h-5 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">Send Tokens</h3>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Send className="w-5 h-5" />
+                Send Tokens
+              </h3>
               
               {!isConnected ? (
-                <motion.div 
-                  className="text-center py-8"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <div className="mb-4">
-                    <Wallet className="w-12 h-12 text-gray-300 mx-auto" />
-                  </div>
-                  <p className="text-gray-500 mb-2">Connect your wallet to send tokens</p>
-                  <p className="text-xs text-gray-400">You need to connect MetaMask first</p>
-                </motion.div>
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">Connect your wallet to send tokens</p>
+                </div>
               ) : (
-                <motion.div 
-                  className="space-y-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Wallet Address
                     </label>
                     <motion.input
                       type="text"
-                      placeholder="Enter recipient wallet address"
                       value={walletAddress}
                       onChange={(e) => {
                         setWalletAddress(e.target.value);
-                        clearMessages();
+                        // Clear messages when user types
+                        if (error || successMessage) {
+                          setError(null);
+                          setSuccessMessage("");
+                        }
                       }}
-                      className="w-full p-3 bg-gray-50/70 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="0x..."
+                      disabled={sendingTokens}
+                      whileFocus={{ scale: 1.01 }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Number of Tokens
+                    </label>
+                    <motion.input
+                      type="number"
+                      value={tokenAmount}
+                      onChange={(e) => {
+                        setTokenAmount(e.target.value);
+                        // Clear messages when user types
+                        if (error || successMessage) {
+                          setError(null);
+                          setSuccessMessage("");
+                        }
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Enter amount"
+                      step="0.01"
+                      min="0"
                       disabled={sendingTokens}
                       whileFocus={{ scale: 1.01 }}
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Number of Tokens
-                    </label>
-                    <motion.input
-                      type="number"
-                      placeholder="Enter number of tokens"
-                      value={tokenAmount}
-                      onChange={(e) => {
-                        setTokenAmount(e.target.value);
-                        clearMessages();
-                      }}
-                      className="w-full p-3 bg-gray-50/70 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
-                      disabled={sendingTokens}
-                      step="0.01"
-                      min="0"
-                      whileFocus={{ scale: 1.01 }}
-                    />
-                  </div>
+                  
 
-                  {/* Local success/error indicators */}
-                  <AnimatePresence>
-                    {error && sendingTokens === false && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="bg-red-50 border border-red-200 rounded-lg p-3"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
-                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                          </div>
-                          <p className="text-red-600 text-sm">{error}</p>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {successMessage && sendingTokens === false && successMessage.includes('✅') && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="bg-green-50 border border-green-200 rounded-lg p-3"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <p className="text-green-600 text-sm font-medium">Transaction successful!</p>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {successMessage && sendingTokens === false && !successMessage.includes('✅') && successMessage.includes('Transaction sent') && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="bg-blue-50 border border-blue-200 rounded-lg p-3"
-                      >
-                        <div className="flex items-center gap-2">
-                          <motion.div
-                            className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-600 rounded-full"
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          />
-                          <p className="text-blue-600 text-sm font-medium">Processing transaction...</p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <motion.button 
+                  <motion.button
                     onClick={handleSendTokens}
-                    disabled={sendingTokens || !walletAddress || !tokenAmount}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md group"
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
+                    disabled={!walletAddress || !tokenAmount || sendingTokens}
                     whileHover={!sendingTokens ? { scale: 1.02 } : {}}
                     whileTap={!sendingTokens ? { scale: 0.98 } : {}}
                   >
@@ -834,12 +772,12 @@ const StudentDashboard = () => {
                       </>
                     ) : (
                       <>
-                        <Send className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                        <Send className="w-4 h-4" />
                         Send Tokens
                       </>
                     )}
                   </motion.button>
-                </motion.div>
+                </div>
               )}
             </motion.div>
           </div>
