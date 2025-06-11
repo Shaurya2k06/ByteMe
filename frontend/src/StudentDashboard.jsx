@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Send, Eye, Clock, Wallet, RefreshCw, CheckCircle } from "lucide-react";
+import { Calendar, Send, Eye, Clock, Wallet, RefreshCw, CheckCircle, Check } from "lucide-react";
 import NavBar3 from "./components/NavBar3";
 import { useMetaMask } from "./hooks/useMetamask";
 import { ethers } from 'ethers';
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
 
 const StudentDashboard = () => {
   const { isConnected, account } = useMetaMask();
@@ -38,13 +37,13 @@ const StudentDashboard = () => {
   });
   const [successMessage, setSuccessMessage] = useState("");
   const [sendingTokens, setSendingTokens] = useState(false);
-  const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [eventsLoading, setEventsLoading] = useState(false);
-  const [eventsError, setEventsError] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   const BITS_CONTRACT_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
   const ADMIN_ACCOUNT = "0x4f91bd1143168af7268eb08b017ec785c06c0e61";
   const FEE_AMOUNT = "20000";
+  const ETHERSCAN_API_KEY = "YG3F5JK1XCCVGPHCRJGRBDTYXDR9WPUGUD";
 
   // Function to get current month's due date (19th of current month)
   const getCurrentFeeDueDate = () => {
@@ -88,6 +87,76 @@ const StudentDashboard = () => {
     }
   ];
 
+  // Function to fetch real transactions from Etherscan
+  const fetchTransactions = async () => {
+    if (!isConnected || !account) {
+      setTransactions([]);
+      return;
+    }
+
+    try {
+      setLoadingTransactions(true);
+      
+      // Fetch ERC-20 token transfers for the BITS token
+      const response = await fetch(
+        `https://api.etherscan.io/api?module=account&action=tokentx&contractaddress=${BITS_CONTRACT_ADDRESS}&address=${account}&page=1&offset=10&sort=desc&apikey=${ETHERSCAN_API_KEY}`
+      );
+      
+      const data = await response.json();
+      
+      if (data.status === '1' && data.result) {
+        const formattedTransactions = data.result.map((tx) => {
+          const isOutgoing = tx.from.toLowerCase() === account.toLowerCase();
+          const amount = ethers.utils.formatUnits(tx.value, 18);
+          const date = new Date(parseInt(tx.timeStamp) * 1000);
+          
+          return {
+            date: date.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            }),
+            amount: parseFloat(amount).toLocaleString('en-US', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2
+            }),
+            to: isOutgoing ? tx.to : tx.from,
+            id: tx.hash,
+            type: isOutgoing ? "send" : "receive",
+            timestamp: parseInt(tx.timeStamp),
+            gasUsed: tx.gasUsed,
+            gasPrice: tx.gasPrice
+          };
+        });
+        
+        // Sort by timestamp (newest first)
+        formattedTransactions.sort((a, b) => b.timestamp - a.timestamp);
+        
+        setTransactions(formattedTransactions.slice(0, 5)); // Show only latest 5
+        
+        // Calculate total spent
+        const totalSent = formattedTransactions
+          .filter(tx => tx.type === "send")
+          .reduce((sum, tx) => sum + parseFloat(tx.amount.replace(/,/g, '')), 0);
+        
+        setTotalSpent(totalSent.toLocaleString('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2
+        }));
+        
+      } else {
+        console.log('No transactions found or API error:', data.message);
+        setTransactions([]);
+      }
+      
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
+      setTransactions([]);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
+
   const fetchBalance = async () => {
     if (!isConnected || !account || !window.ethereum) {
       setBalance("0");
@@ -120,13 +189,6 @@ const StudentDashboard = () => {
         maximumFractionDigits: 2
       }));
 
-      // For demo purposes, set total spent as 10% of balance
-      const spentAmount = (balanceNumber * 0.1);
-      setTotalSpent(spentAmount.toLocaleString('en-US', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-      }));
-
     } catch (err) {
       console.error("Error fetching balance:", err);
       setError("Failed to fetch balance");
@@ -141,16 +203,19 @@ const StudentDashboard = () => {
     if (isConnected && account) {
       const timer = setTimeout(() => {
         fetchBalance();
+        fetchTransactions(); // Fetch transactions when wallet connects
       }, 1000);
       return () => clearTimeout(timer);
     } else {
       setBalance("0");
       setTotalSpent("0");
+      setTransactions([]);
     }
   }, [isConnected, account]);
 
   const handleRefreshBalance = () => {
     fetchBalance();
+    fetchTransactions(); // Also refresh transactions
   };
 
   const validateAddress = (address) => {
@@ -159,6 +224,11 @@ const StudentDashboard = () => {
     } catch {
       return false;
     }
+  };
+
+  const clearMessages = () => {
+    setError(null);
+    setSuccessMessage("");
   };
 
   const handleSendTokens = async () => {
@@ -226,9 +296,10 @@ const StudentDashboard = () => {
         setTokenAmount("");
         // Clear success message after 5 seconds
         setTimeout(() => setSuccessMessage(""), 5000);
-        // Refresh balance after successful transaction
+        // Refresh balance and transactions after successful transaction
         setTimeout(() => {
           fetchBalance();
+          fetchTransactions();
         }, 2000);
       } else {
         setError('Transaction failed');
@@ -305,9 +376,10 @@ const StudentDashboard = () => {
         
         // Clear success message after 8 seconds
         setTimeout(() => setSuccessMessage(""), 8000);
-        // Refresh balance after successful payment
+        // Refresh balance and transactions after successful payment
         setTimeout(() => {
           fetchBalance();
+          fetchTransactions();
         }, 2000);
       } else {
         setError('Fee payment transaction failed');
@@ -331,71 +403,18 @@ const StudentDashboard = () => {
     }
   };
 
-  // Mock data for transactions (you can update this with real data later)
-  const transactions = [
-    {
-      date: "Jun 20, 2025",
-      amount: "500",
-      to: "0x7a2b...f4c8",
-      id: "0xop7k...nbv2",
-      type: "send",
-    },
-    {
-      date: "Jun 19, 2025",
-      amount: "250",
-      to: "0x9f1d...a7e3",
-      id: "0xmn4l...qrt9",
-      type: "receive",
-    },
-    {
-      date: "Jun 18, 2025",
-      amount: "1000",
-      to: "0x3c8e...b2f6",
-      id: "0xgh7j...xyz1",
-      type: "send",
-    },
-  ];
-
-<<<<<<< HEAD
-=======
-  const clearMessages = () => {
-    setError(null);
-    setSuccessMessage("");
+  // Function to open transaction on Etherscan
+  const openTransactionOnEtherscan = (txHash) => {
+    window.open(`https://etherscan.io/tx/${txHash}`, '_blank');
   };
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setEventsLoading(true);
-      setEventsError(null);
-      try {
-        const token = localStorage.getItem("jwt");
-        const response = await axios.get("http://localhost:9092/events/getEvent", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        // Sort by eventDate ascending
-        const sorted = response.data.upcoming
-          .slice()
-          .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
-        setUpcomingEvents(sorted);
-      } catch (err) {
-        setEventsError("Failed to load events");
-      } finally {
-        setEventsLoading(false);
-      }
-    };
-    fetchEvents();
-  }, []);
-  
->>>>>>> 2709c77b2928e2abd56f4440c0d30b59c11fcaa8
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Bar */}
       <NavBar3 />
-      
-      {/* Main Content */}
-      <div className="p-4 lg:p-6">
+
+      {/* Main Content - Added pt-30 to push content down below navbar */}
+      <div className="p-4 lg:p-6 pt-30">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="mb-8">
@@ -416,9 +435,14 @@ const StudentDashboard = () => {
                   exit={{ opacity: 0, y: -20, scale: 0.9 }}
                   className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6"
                 >
-                  <p className="text-green-800 text-sm font-medium">
-                    {successMessage}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="p-1 bg-green-100 rounded-full">
+                      <Check className="w-4 h-4 text-green-600" />
+                    </div>
+                    <p className="text-green-800 text-sm font-medium">
+                      {successMessage}
+                    </p>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -699,110 +723,136 @@ const StudentDashboard = () => {
                     Events This Month
                   </h3>
                   <div className="space-y-4">
-                    {eventsLoading ? (
-                      <motion.div className="p-4 bg-gray-50 rounded-lg animate-pulse">
-                        <p className="text-gray-400">Loading events...</p>
-                      </motion.div>
-                    ) : eventsError ? (
-                      <motion.div className="p-4 bg-red-50 rounded-lg">
-                        <p className="text-red-600">{eventsError}</p>
-                      </motion.div>
-                    ) : upcomingEvents.length === 0 ? (
-                      <motion.div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500">No upcoming events</p>
-                      </motion.div>
-                    ) : (
-                      upcomingEvents.slice(0, 3).map((event) => (
-                        <motion.div
-                          key={event._id}
-                          className="p-4 bg-blue-50 rounded-lg"
-                          whileHover={{ scale: 1.02 }}
-                        >
-                          <h4 className="font-semibold text-blue-900">
-                            {event.eventName}
-                          </h4>
-                          <p className="text-sm text-blue-700">
-                            {new Date(event.eventDate).toLocaleDateString("en-US", {
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </p>
-                        </motion.div>
-                      ))
-                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Send Tokens - Updated with better functionality */}
+            {/* Send Tokens - Updated with better styling */}
             <motion.div 
-              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
+              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300"
               whileHover={{ y: -2 }}
               transition={{ duration: 0.2 }}
             >
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Send className="w-5 h-5" />
-                Send Tokens
-              </h3>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl">
+                  <Send className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Send Tokens</h3>
+              </div>
               
               {!isConnected ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">Connect your wallet to send tokens</p>
-                </div>
+                <motion.div 
+                  className="text-center py-8"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <div className="mb-4">
+                    <Wallet className="w-12 h-12 text-gray-300 mx-auto" />
+                  </div>
+                  <p className="text-gray-500 mb-2">Connect your wallet to send tokens</p>
+                  <p className="text-xs text-gray-400">You need to connect MetaMask first</p>
+                </motion.div>
               ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                <motion.div 
+                  className="space-y-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
                       Wallet Address
                     </label>
                     <motion.input
                       type="text"
+                      placeholder="Enter recipient wallet address"
                       value={walletAddress}
                       onChange={(e) => {
                         setWalletAddress(e.target.value);
-                        // Clear messages when user types
-                        if (error || successMessage) {
-                          setError(null);
-                          setSuccessMessage("");
-                        }
+                        clearMessages();
                       }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      placeholder="0x..."
+                      className="w-full p-3 bg-gray-50/70 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
                       disabled={sendingTokens}
                       whileFocus={{ scale: 1.01 }}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
                       Number of Tokens
                     </label>
                     <motion.input
                       type="number"
+                      placeholder="Enter number of tokens"
                       value={tokenAmount}
                       onChange={(e) => {
                         setTokenAmount(e.target.value);
-                        // Clear messages when user types
-                        if (error || successMessage) {
-                          setError(null);
-                          setSuccessMessage("");
-                        }
+                        clearMessages();
                       }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      placeholder="Enter amount"
+                      className="w-full p-3 bg-gray-50/70 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+                      disabled={sendingTokens}
                       step="0.01"
                       min="0"
-                      disabled={sendingTokens}
                       whileFocus={{ scale: 1.01 }}
                     />
                   </div>
-                  
-                  
 
-                  <motion.button
+                  {/* Local success/error indicators */}
+                  <AnimatePresence>
+                    {error && sendingTokens === false && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-red-50 border border-red-200 rounded-lg p-3"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          </div>
+                          <p className="text-red-600 text-sm">{error}</p>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {successMessage && sendingTokens === false && successMessage.includes('✅') && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-green-50 border border-green-200 rounded-lg p-3"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <p className="text-green-600 text-sm font-medium">Transaction successful!</p>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {successMessage && sendingTokens === false && !successMessage.includes('✅') && successMessage.includes('Transaction sent') && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-blue-50 border border-blue-200 rounded-lg p-3"
+                      >
+                        <div className="flex items-center gap-2">
+                          <motion.div
+                            className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-600 rounded-full"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          />
+                          <p className="text-blue-600 text-sm font-medium">Processing transaction...</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <motion.button 
                     onClick={handleSendTokens}
-                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
-                    disabled={!walletAddress || !tokenAmount || sendingTokens}
+                    disabled={sendingTokens || !walletAddress || !tokenAmount}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md group"
                     whileHover={!sendingTokens ? { scale: 1.02 } : {}}
                     whileTap={!sendingTokens ? { scale: 0.98 } : {}}
                   >
@@ -817,17 +867,17 @@ const StudentDashboard = () => {
                       </>
                     ) : (
                       <>
-                        <Send className="w-4 h-4" />
+                        <Send className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                         Send Tokens
                       </>
                     )}
                   </motion.button>
-                </div>
+                </motion.div>
               )}
             </motion.div>
           </div>
 
-          {/* Bottom Row - Latest Transactions */}
+          {/* Bottom Row - Latest Transactions - Updated with real data */}
           <motion.div 
             className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
             whileHover={{ y: -2 }}
@@ -837,59 +887,96 @@ const StudentDashboard = () => {
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Eye className="w-5 h-5" />
                 Latest Transactions
+                {loadingTransactions && (
+                  <motion.div
+                    className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-600 rounded-full ml-2"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  />
+                )}
               </h3>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              <button 
+                onClick={() => window.open(`https://etherscan.io/address/${account}`, '_blank')}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                disabled={!account}
+              >
                 View All
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-sm font-medium text-gray-500 border-b border-gray-200">
-                    <th className="pb-3">Date</th>
-                    <th className="pb-3">Amount</th>
-                    <th className="pb-3">To/From</th>
-                    <th className="pb-3">Transaction ID</th>
-                    <th className="pb-3">Type</th>
-                  </tr>
-                </thead>
-                <tbody className="space-y-2">
-                  {transactions.map((txn, idx) => (
-                    <motion.tr
-                      key={idx}
-                      className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
-                      whileHover={{ scale: 1.01 }}
-                      transition={{ duration: 0.1 }}
-                    >
-                      <td className="py-4 text-sm text-gray-900">{txn.date}</td>
-                      <td className="py-4">
-                        <span className="text-sm font-semibold text-gray-900">
-                          {txn.amount} BITS
-                        </span>
-                      </td>
-                      <td className="py-4 text-sm text-gray-600 font-mono">
-                        {txn.to}
-                      </td>
-                      <td className="py-4 text-sm text-gray-600 font-mono">
-                        {txn.id}
-                      </td>
-                      <td className="py-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            txn.type === "send"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-green-100 text-green-700"
-                          }`}
-                        >
-                          {txn.type === "send" ? "Sent" : "Received"}
-                        </span>
-                      </td>
-                    </motion.tr>
+            {!isConnected ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Connect your wallet to view transactions</p>
+              </div>
+            ) : loadingTransactions ? (
+              <div className="text-center py-8">
+                <div className="animate-pulse space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex space-x-4">
+                      <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <div className="h-4 bg-gray-200 rounded w-32"></div>
+                      <div className="h-4 bg-gray-200 rounded w-28"></div>
+                      <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </div>
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No BITS token transactions found</p>
+                <p className="text-xs text-gray-400 mt-1">Make your first transaction to see it here</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-sm font-medium text-gray-500 border-b border-gray-200">
+                      <th className="pb-3">Date</th>
+                      <th className="pb-3">Amount</th>
+                      <th className="pb-3">To/From</th>
+                      <th className="pb-3">Transaction ID</th>
+                      <th className="pb-3">Type</th>
+                    </tr>
+                  </thead>
+                  <tbody className="space-y-2">
+                    {transactions.map((txn, idx) => (
+                      <motion.tr
+                        key={idx}
+                        className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer"
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ duration: 0.1 }}
+                        onClick={() => openTransactionOnEtherscan(txn.id)}
+                      >
+                        <td className="py-4 text-sm text-gray-900">{txn.date}</td>
+                        <td className="py-4">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {txn.amount} BITS
+                          </span>
+                        </td>
+                        <td className="py-4 text-sm text-gray-600 font-mono">
+                          {txn.to.slice(0, 6)}...{txn.to.slice(-4)}
+                        </td>
+                        <td className="py-4 text-sm text-gray-600 font-mono">
+                          {txn.id.slice(0, 6)}...{txn.id.slice(-4)}
+                        </td>
+                        <td className="py-4">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              txn.type === "send"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
+                          >
+                            {txn.type === "send" ? "Sent" : "Received"}
+                          </span>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </motion.div>
         </div>
       </div>
