@@ -98,6 +98,7 @@ async function getAllStudents(req, res) {
             feeStatus: student.feeStatus,
         }));
 
+        console.log(studentsData)
         return res.status(200).json({ students: studentsData });
     } catch(err) {
         console.error(err);
