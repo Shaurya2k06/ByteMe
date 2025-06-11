@@ -41,6 +41,7 @@ const StudentList = () => {
           },
           withCredentials: true,
         });
+        console.log(response.data)
 
         const mappedStudents = response.data.students.map((student) => ({
           username: student.userName,
