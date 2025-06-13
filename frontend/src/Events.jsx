@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { motion, AnimatePresence } from "framer-motion";
 
 // BITS Token Configuration
-const BITS_TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+const BITS_TOKEN_ADDRESS = "0xfEc060d0CF069ce6b1518445dB538058e9eE063d";
 const ADMIN_WALLET_ADDRESS = "0x4f91bD1143168aF7268EB08B017eC785C06C0E61";
 
 // ERC-20 Transfer Function ABI
