@@ -58,7 +58,7 @@ UniByte/
 - **Hardhat** development environment with testing
 - **OpenZeppelin** for secure contract standards
 - **ERC20** token implementation with autopay features
-- **Alchemy/Infura** for blockchain connectivity
+- **Alchemy** for blockchain connectivity
 
 ## 📋 Prerequisites
 
@@ -297,9 +297,12 @@ This project is licensed under the **MIT License** - see the LICENSE file for de
 ## 👥 Team ByteMe
 
 **Project Lead & Blockchain Developer**: Shaurya Srivastava
+
 **Backend Development**: Utkarsh Mani Tripathi
-**Frontend Development**: Shantanav Mukherjee   
-**UI/UX Design**: Purva Pote  
+
+**Frontend Development**: Shantanav Mukherjee
+
+**UI/UX Design**: Purva Pote
 
 ## 🆘 Support & Contact
 
