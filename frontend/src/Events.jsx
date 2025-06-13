@@ -1,10 +1,214 @@
 import React, { useState, useRef, useEffect } from "react";
 import NavBar3 from "./components/NavBar3";
-import { ChevronLeft, ChevronRight, Search, Calendar, MapPin, Tag } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Calendar, MapPin, Tag, Wallet, CheckCircle } from "lucide-react";
 import axios from "axios";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion, AnimatePresence } from "framer-motion";
+
+// BITS Token Configuration
+const BITS_TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+const ADMIN_WALLET_ADDRESS = "0x4f91bD1143168aF7268EB08B017eC785C06C0E61";
+
+// ERC-20 Transfer Function ABI
+const ERC20_TRANSFER_ABI = [
+  {
+    "constant": false,
+    "inputs": [
+      {"name": "_to", "type": "address"},
+      {"name": "_value", "type": "uint256"}
+    ],
+    "name": "transfer",
+    "outputs": [{"name": "", "type": "bool"}],
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [{"name": "_owner", "type": "address"}],
+    "name": "balanceOf",
+    "outputs": [{"name": "balance", "type": "uint256"}],
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [{"name": "", "type": "uint8"}],
+    "type": "function"
+  }
+];
+
+// Web3 Integration Hook with BITS Token Support
+const useWeb3 = () => {
+  const [account, setAccount] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [bitsBalance, setBitsBalance] = useState("0");
+
+  const connectWallet = async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        setIsLoading(true);
+        const accounts = await window.ethereum.request({
+          method: 'eth_requestAccounts'
+        });
+        setAccount(accounts[0]);
+        setIsConnected(true);
+        await getBitsBalance(accounts[0]);
+        return accounts[0];
+      } catch (error) {
+        console.error('Error connecting wallet:', error);
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      toast.error('MetaMask not detected. Please install MetaMask!');
+      return null;
+    }
+  };
+
+  const disconnectWallet = () => {
+    setAccount(null);
+    setIsConnected(false);
+    setBitsBalance("0");
+  };
+
+  const getBitsBalance = async (address) => {
+    try {
+      if (!window.ethereum) return;
+      
+      // Create contract call data for balanceOf
+      const balanceOfData = '0x70a08231' + address.slice(2).padStart(64, '0');
+      
+      const result = await window.ethereum.request({
+        method: 'eth_call',
+        params: [{
+          to: BITS_TOKEN_ADDRESS,
+          data: balanceOfData
+        }, 'latest']
+      });
+      
+      // Convert hex result to decimal and format (assuming 18 decimals)
+      const balance = parseInt(result, 16);
+      const formattedBalance = (balance / Math.pow(10, 18)).toFixed(2);
+      setBitsBalance(formattedBalance);
+    } catch (error) {
+      console.error('Error fetching BITS balance:', error);
+      setBitsBalance("0");
+    }
+  };
+
+  const sendBitsToken = async (toAddress, amountInBits, eventName) => {
+    if (!window.ethereum || !account) {
+      toast.error('Please connect your wallet first');
+      return false;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Convert amount to wei (assuming 18 decimals for BITS token)
+      const amountInWei = (amountInBits * Math.pow(10, 18)).toString();
+      const amountHex = '0x' + parseInt(amountInWei).toString(16);
+      
+      // Create transfer function call data
+      const transferData = '0xa9059cbb' + // transfer function selector
+        toAddress.slice(2).padStart(64, '0') + // to address (32 bytes)
+        amountHex.slice(2).padStart(64, '0'); // amount (32 bytes)
+
+      const transactionParameters = {
+        to: BITS_TOKEN_ADDRESS,
+        from: account,
+        data: transferData,
+        gas: '0x11170', // 70000 gas limit for ERC-20 transfer
+      };
+
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParameters],
+      });
+
+      toast.success(`Registration successful! Transaction: ${txHash.slice(0, 10)}...`);
+      
+      // Refresh balance after successful transaction
+      setTimeout(() => getBitsBalance(account), 2000);
+      
+      return txHash;
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      if (error.code === 4001) {
+        toast.error('Transaction rejected by user');
+      } else if (error.message.includes('insufficient funds')) {
+        toast.error('Insufficient BITS balance');
+      } else {
+        toast.error('Transaction failed. Please try again.');
+      }
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Check if already connected
+    const checkConnection = async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const accounts = await window.ethereum.request({
+            method: 'eth_accounts'
+          });
+          if (accounts.length > 0) {
+            setAccount(accounts[0]);
+            setIsConnected(true);
+            await getBitsBalance(accounts[0]);
+          }
+        } catch (error) {
+          console.error('Error checking connection:', error);
+        }
+      }
+    };
+
+    checkConnection();
+
+    // Listen for account changes
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', async (accounts) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+          setIsConnected(true);
+          await getBitsBalance(accounts[0]);
+        } else {
+          setAccount(null);
+          setIsConnected(false);
+          setBitsBalance("0");
+        }
+      });
+
+      window.ethereum.on('chainChanged', () => {
+        window.location.reload();
+      });
+    }
+
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeAllListeners('accountsChanged');
+        window.ethereum.removeAllListeners('chainChanged');
+      }
+    };
+  }, []);
+
+  return {
+    account,
+    isConnected,
+    isLoading,
+    bitsBalance,
+    connectWallet,
+    disconnectWallet,
+    sendBitsToken,
+    getBitsBalance
+  };
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -30,6 +234,7 @@ function Events() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [events, setEvents] = useState([]);
+  const [registeredEvents, setRegisteredEvents] = useState(new Set());
   const carouselRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -121,7 +326,7 @@ function Events() {
     <div className="w-full min-h-screen bg-white relative overflow-hidden">
       {/* Enhanced Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Enhanced floating elements - More visible */}
+        {/* ...existing background animations... */}
         {Array.from({ length: 12 }, (_, i) => (
           <motion.div
             key={`float-${i}`}
@@ -145,7 +350,6 @@ function Events() {
           />
         ))}
 
-        {/* Grid pattern elements - More visible */}
         {Array.from({ length: 8 }, (_, i) => (
           <motion.div
             key={`grid-${i}`}
@@ -168,7 +372,6 @@ function Events() {
           />
         ))}
 
-        {/* Flowing lines - More visible */}
         {Array.from({ length: 6 }, (_, i) => (
           <motion.div
             key={`line-${i}`}
@@ -192,7 +395,6 @@ function Events() {
           />
         ))}
 
-        {/* Morphing circles - More visible */}
         {Array.from({ length: 4 }, (_, i) => (
           <motion.div
             key={`circle-${i}`}
@@ -217,7 +419,6 @@ function Events() {
           />
         ))}
 
-        {/* Wave effects - More visible */}
         {Array.from({ length: 8 }, (_, i) => (
           <motion.div
             key={`wave-${i}`}
@@ -240,7 +441,6 @@ function Events() {
           />
         ))}
         
-        {/* Large geometric shapes - More visible */}
         <motion.div
           className="absolute top-20 right-16 w-40 h-40 border-2 border-gray-300/60 rounded-full"
           animate={{ 
@@ -267,7 +467,6 @@ function Events() {
           }}
         />
 
-        {/* Diagonal lines - More visible */}
         <motion.div
           className="absolute top-1/4 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-400/40 to-transparent transform rotate-12"
           animate={{
@@ -295,7 +494,6 @@ function Events() {
           }}
         />
 
-        {/* Particle system - More visible */}
         {Array.from({ length: 20 }, (_, i) => (
           <motion.div
             key={`particle-${i}`}
@@ -319,7 +517,6 @@ function Events() {
           />
         ))}
 
-        {/* Pulse circles */}
         {Array.from({ length: 3 }, (_, i) => (
           <motion.div
             key={`pulse-${i}`}
@@ -343,7 +540,6 @@ function Events() {
           />
         ))}
 
-        {/* Subtle gradient orbs - More visible */}
         <motion.div
           className="absolute top-1/3 left-1/4 w-80 h-80 bg-gradient-to-r from-gray-200/30 to-gray-300/30 rounded-full blur-3xl"
           animate={{
@@ -371,7 +567,6 @@ function Events() {
           }}
         />
 
-        {/* Additional spiral patterns */}
         {Array.from({ length: 5 }, (_, i) => (
           <motion.div
             key={`spiral-${i}`}
@@ -394,7 +589,6 @@ function Events() {
           />
         ))}
 
-        {/* Hexagon patterns */}
         {Array.from({ length: 6 }, (_, i) => (
           <motion.div
             key={`hex-${i}`}
@@ -418,7 +612,6 @@ function Events() {
           />
         ))}
 
-        {/* Diamond cascade */}
         {Array.from({ length: 4 }, (_, i) => (
           <motion.div
             key={`diamond-${i}`}
@@ -441,7 +634,6 @@ function Events() {
           />
         ))}
 
-        {/* Constellation effect */}
         {Array.from({ length: 12 }, (_, i) => (
           <motion.div
             key={`star-${i}`}
@@ -463,7 +655,6 @@ function Events() {
           />
         ))}
 
-        {/* Orbital rings */}
         <motion.div
           className="absolute top-1/2 left-1/2 w-48 h-48 border border-gray-200/30 rounded-full transform -translate-x-1/2 -translate-y-1/2"
           animate={{
@@ -712,7 +903,13 @@ function Events() {
                 ))
               ) : filteredEvents.length > 0 ? (
                 filteredEvents.map((event, index) => (
-                  <EventCard key={event.id} event={event} index={index} />
+                  <EventCard 
+                    key={event.id} 
+                    event={event} 
+                    index={index} 
+                    registeredEvents={registeredEvents}
+                    setRegisteredEvents={setRegisteredEvents}
+                  />
                 ))
               ) : (
                 <motion.div
@@ -743,30 +940,79 @@ function Events() {
           </motion.div>
         </motion.div>
       </div>
+      
+      <ToastContainer 
+        position="bottom-right" 
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }
 
-function EventCard({ event, index }) {
+function EventCard({ event, index, registeredEvents, setRegisteredEvents }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const { account, isConnected, bitsBalance, connectWallet, sendBitsToken } = useWeb3();
+  
+  const isRegistered = registeredEvents.has(event.id);
 
   const handleRegister = async () => {
+    if (!isConnected) {
+      const connected = await connectWallet();
+      if (!connected) return;
+    }
+
+    // Check if user has enough BITS
+    if (parseFloat(bitsBalance) < event.bits) {
+      toast.error(`Insufficient BITS balance. You need ${event.bits} BITS but only have ${bitsBalance} BITS.`);
+      return;
+    }
+
+    setIsRegistering(true);
+    
     try {
-      await axios.post(
-        "http://localhost:9092/events/joinEvent",
-        { eventId: event.id },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("jwt")}`,
-          },
+      // Send BITS token payment first
+      const txHash = await sendBitsToken(ADMIN_WALLET_ADDRESS, event.bits, event.title);
+      
+      if (txHash) {
+        // Then register with the backend
+        try {
+          await axios.post(
+            "http://localhost:9092/events/joinEvent",
+            { 
+              eventId: event.id,
+              transactionHash: txHash,
+              tokenAddress: BITS_TOKEN_ADDRESS,
+              amountPaid: event.bits,
+              walletAddress: account
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+              },
+            }
+          );
+          
+          // Mark as registered
+          setRegisteredEvents(prev => new Set([...prev, event.id]));
+          toast.success(`Successfully registered for ${event.title} with ${event.bits} BITS!`);
+        } catch (apiError) {
+          console.error("Backend registration failed:", apiError);
+          toast.warning('Payment completed but failed to record registration. Please contact support with transaction hash: ' + txHash);
         }
-      );
-      toast.success("Successfully registered for event!");
+      }
     } catch (error) {
-      console.error("Registration failed:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to register for the event"
-      );
+      console.error("Registration error:", error);
+      toast.error("Registration failed. Please try again.");
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -882,19 +1128,48 @@ function EventCard({ event, index }) {
               <span>{event.tags}</span>
             </motion.div>
             
-            <motion.button
-              onClick={handleRegister}
-              className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-800 transition-all duration-200 font-medium"
-              whileHover={{ scale: 1.02, x: 2 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Register
-            </motion.button>
+            {isRegistered ? (
+              <motion.div
+                className="flex items-center gap-2 text-green-600 text-sm font-medium"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Registered</span>
+              </motion.div>
+            ) : (
+              <motion.button
+                onClick={handleRegister}
+                disabled={isRegistering}
+                className={`text-white text-sm px-4 py-2 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 ${
+                  isRegistering 
+                    ? "bg-gray-400 cursor-not-allowed" 
+                    : "bg-gray-900 hover:bg-gray-800"
+                }`}
+                whileHover={!isRegistering ? { scale: 1.02, x: 2 } : {}}
+                whileTap={!isRegistering ? { scale: 0.98 } : {}}
+              >
+                {isRegistering ? (
+                  <>
+                    <motion.div
+                      className="w-3 h-3 border border-white border-t-transparent rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Register</span>
+                    <Wallet className="w-4 h-4" />
+                  </>
+                )}
+              </motion.button>
+            )}
           </div>
         </motion.div>
       </div>
-      
-      <ToastContainer position="top-right" autoClose={3000} />
     </motion.div>
   );
 }
