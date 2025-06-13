@@ -34,11 +34,12 @@ async function qrTokenCreation(req, res) {
 async function qrTokenVerification(req, res) {
     try {
         const body = req.body;
+        console.log(body.token)
         const user = await verifyUserAuth(req);
         if(!user) {
             return res.status(401).json({message : "No user found"});
         }
-        const token = body.qrToken;
+        const token = body.token;
         if(!token) return res.status(401).json({message : "No Token Found"});
 
         let decodedQrToken;

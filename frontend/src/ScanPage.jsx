@@ -1,10 +1,13 @@
 import React from "react";
 import axios from "axios";
 import Html5QrScanner from "./components/QrScannner.jsx";
+import { useNavigate } from "react-router-dom";
+
 
 const jwt = localStorage.getItem("jwt");
 
 const ScanPage = () => {
+    const navigate = useNavigate();
     const handleScan = async (token) => {
         console.log("Scanned token:", token);
         try {
@@ -17,6 +20,9 @@ const ScanPage = () => {
                     },
                 }
             );
+            if(res) {
+                navigate("/pay");
+            }
             console.log("Backend response:", res.data);
         } catch (err) {
             console.error("Failed to send token:", err);
