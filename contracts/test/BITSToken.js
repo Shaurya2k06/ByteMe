@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("BITS Contract", function () {
     async function deployBITSTokenFixture() {
@@ -190,6 +191,110 @@ describe("BITS Contract", function () {
 
             expect(await dummyToken.balanceOf(BITSTokenAddress)).to.equal(0);
             expect(await dummyToken.balanceOf(owner.address)).to.equal(ownerInitialDummyBalance + stuckAmount);
+        });
+    });
+
+    describe("Autopay Functionality", function () {
+        it("Should authorize owner as collector on deployment", async function () {
+            const { BITSToken, owner } = await loadFixture(deployBITSTokenFixture);
+            expect(await BITSToken.authorizedCollectors(owner.address)).to.be.true;
+        });
+
+        it("Should allow owner to authorize new collectors", async function () {
+            const { BITSToken, owner, addr1 } = await loadFixture(deployBITSTokenFixture);
+            
+            await expect(BITSToken.authorizeCollector(addr1.address))
+                .to.emit(BITSToken, "CollectorAuthorized")
+                .withArgs(addr1.address);
+            
+            expect(await BITSToken.authorizedCollectors(addr1.address)).to.be.true;
+        });
+
+        it("Should allow users to enable autopay for authorized collectors", async function () {
+            const { BITSToken, owner, addr1 } = await loadFixture(deployBITSTokenFixture);
+            
+            // First give addr1 some tokens
+            await BITSToken.transfer(addr1.address, ethers.parseUnits("1000", 18));
+            
+            const amount = ethers.parseUnits("100", 18);
+            const interval = 30 * 24 * 60 * 60; // 30 days
+            
+            await expect(BITSToken.connect(addr1).enableAutopay(owner.address, amount, interval))
+                .to.emit(BITSToken, "AutopayEnabled")
+                .withArgs(addr1.address, owner.address, amount, interval);
+            
+            const subscription = await BITSToken.getAutopaySubscription(addr1.address, owner.address);
+            expect(subscription.isActive).to.be.true;
+            expect(subscription.amount).to.equal(amount);
+        });
+
+        it("Should not allow autopay for unauthorized collectors", async function () {
+            const { BITSToken, addr1, addr2 } = await loadFixture(deployBITSTokenFixture);
+            
+            const amount = ethers.parseUnits("100", 18);
+            const interval = 30 * 24 * 60 * 60;
+            
+            await expect(
+                BITSToken.connect(addr1).enableAutopay(addr2.address, amount, interval)
+            ).to.be.revertedWith("BITS: Collector not authorized");
+        });
+
+        it("Should execute autopay when due", async function () {
+            const { BITSToken, owner, addr1 } = await loadFixture(deployBITSTokenFixture);
+            
+            // Give addr1 tokens and set up autopay
+            await BITSToken.transfer(addr1.address, ethers.parseUnits("1000", 18));
+            
+            const amount = ethers.parseUnits("100", 18);
+            const interval = 30 * 24 * 60 * 60; // 30 days
+            
+            await BITSToken.connect(addr1).enableAutopay(owner.address, amount, interval);
+            
+            // Fast forward time to make payment due
+            await time.increase(interval + 1);
+            
+            const initialOwnerBalance = await BITSToken.balanceOf(owner.address);
+            const initialAddr1Balance = await BITSToken.balanceOf(addr1.address);
+            
+            await expect(BITSToken.executeAutopay(addr1.address, owner.address))
+                .to.emit(BITSToken, "AutopayExecuted")
+                .withArgs(addr1.address, owner.address, amount);
+            
+            expect(await BITSToken.balanceOf(owner.address)).to.equal(initialOwnerBalance + amount);
+            expect(await BITSToken.balanceOf(addr1.address)).to.equal(initialAddr1Balance - amount);
+        });
+
+        it("Should not execute autopay if not due", async function () {
+            const { BITSToken, owner, addr1 } = await loadFixture(deployBITSTokenFixture);
+            
+            await BITSToken.transfer(addr1.address, ethers.parseUnits("1000", 18));
+            
+            const amount = ethers.parseUnits("100", 18);
+            const interval = 30 * 24 * 60 * 60;
+            
+            await BITSToken.connect(addr1).enableAutopay(owner.address, amount, interval);
+            
+            await expect(
+                BITSToken.executeAutopay(addr1.address, owner.address)
+            ).to.be.revertedWith("BITS: Autopay not due yet");
+        });
+
+        it("Should allow users to disable autopay", async function () {
+            const { BITSToken, owner, addr1 } = await loadFixture(deployBITSTokenFixture);
+            
+            await BITSToken.transfer(addr1.address, ethers.parseUnits("1000", 18));
+            
+            const amount = ethers.parseUnits("100", 18);
+            const interval = 30 * 24 * 60 * 60;
+            
+            await BITSToken.connect(addr1).enableAutopay(owner.address, amount, interval);
+            
+            await expect(BITSToken.connect(addr1).disableAutopay(owner.address))
+                .to.emit(BITSToken, "AutopayDisabled")
+                .withArgs(addr1.address, owner.address);
+            
+            const subscription = await BITSToken.getAutopaySubscription(addr1.address, owner.address);
+            expect(subscription.isActive).to.be.false;
         });
     });
 });
