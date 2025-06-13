@@ -39,6 +39,9 @@ const StudentDashboard = () => {
   const [sendingTokens, setSendingTokens] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [autopayEnabled, setAutopayEnabled] = useState(false);
+  const [loadingAutopay, setLoadingAutopay] = useState(false);
+  const [checkingAutopay, setCheckingAutopay] = useState(false);
 
   const BITS_CONTRACT_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
   const ADMIN_ACCOUNT = "0x4f91bd1143168af7268eb08b017ec785c06c0e61";
@@ -67,6 +70,7 @@ const StudentDashboard = () => {
     });
   };
 
+  // Updated ABI to include autopay functions
   const BITS_ABI = [
     {
       "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
@@ -81,6 +85,60 @@ const StudentDashboard = () => {
         {"internalType": "uint256", "name": "amount", "type": "uint256"}
       ],
       "name": "transfer",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "collector", "type": "address"},
+        {"internalType": "uint256", "name": "amount", "type": "uint256"},
+        {"internalType": "uint256", "name": "interval", "type": "uint256"}
+      ],
+      "name": "enableAutopay",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "address", "name": "collector", "type": "address"}],
+      "name": "disableAutopay",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "payer", "type": "address"},
+        {"internalType": "address", "name": "collector", "type": "address"}
+      ],
+      "name": "getAutopaySubscription",
+      "outputs": [
+        {"internalType": "bool", "name": "isActive", "type": "bool"},
+        {"internalType": "uint256", "name": "amount", "type": "uint256"},
+        {"internalType": "uint256", "name": "lastPayment", "type": "uint256"},
+        {"internalType": "uint256", "name": "interval", "type": "uint256"},
+        {"internalType": "uint256", "name": "nextPaymentDue", "type": "uint256"}
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "payer", "type": "address"},
+        {"internalType": "address", "name": "collector", "type": "address"}
+      ],
+      "name": "isAutopayDue",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "payer", "type": "address"},
+        {"internalType": "address", "name": "collector", "type": "address"}
+      ],
+      "name": "executeAutopay",
       "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -199,17 +257,137 @@ const StudentDashboard = () => {
     }
   };
 
+  // Check autopay status
+  const checkAutopayStatus = async () => {
+    if (!isConnected || !account) return;
+
+    try {
+      setCheckingAutopay(true);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const contract = new ethers.Contract(BITS_CONTRACT_ADDRESS, BITS_ABI, provider);
+
+      const subscription = await contract.getAutopaySubscription(account, ADMIN_ACCOUNT);
+      setAutopayEnabled(subscription.isActive);
+
+      // Check if payment is due and execute if necessary
+      if (subscription.isActive) {
+        const isDue = await contract.isAutopayDue(account, ADMIN_ACCOUNT);
+        if (isDue) {
+          // Notify user that autopay will execute
+          setSuccessMessage("🔄 Autopay payment is due. Executing automatic payment...");
+          
+          // Execute autopay
+          const signer = provider.getSigner();
+          const contractWithSigner = contract.connect(signer);
+          const tx = await contractWithSigner.executeAutopay(account, ADMIN_ACCOUNT);
+          await tx.wait();
+          
+          setSuccessMessage("✅ Autopay executed successfully! Next payment due next month.");
+          setFeesPaid(true);
+          localStorage.setItem('feesPaid', 'true');
+          localStorage.setItem('lastPaymentDate', new Date().toISOString());
+          
+          setTimeout(() => {
+            fetchBalance();
+            fetchTransactions();
+          }, 2000);
+        }
+      }
+
+    } catch (err) {
+      console.error("Error checking autopay:", err);
+    } finally {
+      setCheckingAutopay(false);
+    }
+  };
+
+  // Enable autopay
+  const handleEnableAutopay = async () => {
+    if (!isConnected || !account) {
+      setError("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      setLoadingAutopay(true);
+      setError(null);
+      
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(BITS_CONTRACT_ADDRESS, BITS_ABI, signer);
+
+      // 30 days in seconds (30 * 24 * 60 * 60)
+      const monthlyInterval = 2592000;
+      const feeAmountWei = ethers.utils.parseUnits(FEE_AMOUNT, 18);
+
+      const tx = await contract.enableAutopay(ADMIN_ACCOUNT, feeAmountWei, monthlyInterval);
+      
+      setSuccessMessage('Enabling autopay... Please wait for confirmation.');
+      
+      await tx.wait();
+      
+      setAutopayEnabled(true);
+      setSuccessMessage('🎉 Autopay enabled successfully! Your fees will be automatically deducted monthly.');
+      
+      setTimeout(() => setSuccessMessage(""), 5000);
+
+    } catch (err) {
+      console.error('Enable autopay error:', err);
+      
+      let errorMessage = 'Failed to enable autopay';
+      if (err.code === 4001) {
+        errorMessage = 'Transaction rejected by user';
+      } else if (err.message.includes('Collector not authorized')) {
+        errorMessage = 'Admin account not authorized for autopay';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoadingAutopay(false);
+    }
+  };
+
+  // Disable autopay
+  const handleDisableAutopay = async () => {
+    if (!isConnected || !account) return;
+
+    try {
+      setLoadingAutopay(true);
+      setError(null);
+      
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(BITS_CONTRACT_ADDRESS, BITS_ABI, signer);
+
+      const tx = await contract.disableAutopay(ADMIN_ACCOUNT);
+      await tx.wait();
+      
+      setAutopayEnabled(false);
+      setSuccessMessage('Autopay disabled successfully.');
+      
+      setTimeout(() => setSuccessMessage(""), 3000);
+
+    } catch (err) {
+      console.error('Disable autopay error:', err);
+      setError('Failed to disable autopay');
+    } finally {
+      setLoadingAutopay(false);
+    }
+  };
+
   useEffect(() => {
     if (isConnected && account) {
       const timer = setTimeout(() => {
         fetchBalance();
-        fetchTransactions(); // Fetch transactions when wallet connects
+        fetchTransactions();
+        checkAutopayStatus(); // Check autopay status
       }, 1000);
       return () => clearTimeout(timer);
     } else {
       setBalance("0");
       setTotalSpent("0");
       setTransactions([]);
+      setAutopayEnabled(false);
     }
   }, [isConnected, account]);
 
