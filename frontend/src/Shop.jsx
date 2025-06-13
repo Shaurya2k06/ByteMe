@@ -1,10 +1,12 @@
 import React from "react";
-import { Search, ShoppingBag, Star, Tag, QrCode } from "lucide-react";
+import { Search, ShoppingBag, Star, Tag, QrCode, Wallet } from "lucide-react";
 import NavBar3 from "./components/NavBar3.jsx";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -26,9 +28,267 @@ const cardVariants = {
   }
 };
 
-// Minimalistic Card Component
+// BITS Token Configuration
+const BITS_TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+const SHOP_WALLET_ADDRESS = "0x4f91bD1143168aF7268EB08B017eC785C06C0E61"; 
+
+// ERC-20 Transfer Function ABI
+const ERC20_TRANSFER_ABI = [
+  {
+    "constant": false,
+    "inputs": [
+      {"name": "_to", "type": "address"},
+      {"name": "_value", "type": "uint256"}
+    ],
+    "name": "transfer",
+    "outputs": [{"name": "", "type": "bool"}],
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [{"name": "_owner", "type": "address"}],
+    "name": "balanceOf",
+    "outputs": [{"name": "balance", "type": "uint256"}],
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [{"name": "", "type": "uint8"}],
+    "type": "function"
+  }
+];
+
+// Web3 Integration Hook with BITS Token Support
+const useWeb3 = () => {
+  const [account, setAccount] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [bitsBalance, setBitsBalance] = useState("0");
+
+  const connectWallet = async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        setIsLoading(true);
+        const accounts = await window.ethereum.request({
+          method: 'eth_requestAccounts'
+        });
+        setAccount(accounts[0]);
+        setIsConnected(true);
+        await getBitsBalance(accounts[0]);
+        
+        return accounts[0];
+      } catch (error) {
+        console.error('Error connecting wallet:', error);
+        
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+    
+      return null;
+    }
+  };
+
+  const disconnectWallet = () => {
+    setAccount(null);
+    setIsConnected(false);
+    setBitsBalance("0");
+  };
+
+  const getBitsBalance = async (address) => {
+    try {
+      if (!window.ethereum) return;
+      
+      // Create contract call data for balanceOf
+      const balanceOfData = '0x70a08231' + address.slice(2).padStart(64, '0');
+      
+      const result = await window.ethereum.request({
+        method: 'eth_call',
+        params: [{
+          to: BITS_TOKEN_ADDRESS,
+          data: balanceOfData
+        }, 'latest']
+      });
+      
+      // Convert hex result to decimal and format (assuming 18 decimals)
+      const balance = parseInt(result, 16);
+      const formattedBalance = (balance / Math.pow(10, 18)).toFixed(2);
+      setBitsBalance(formattedBalance);
+    } catch (error) {
+      console.error('Error fetching BITS balance:', error);
+      setBitsBalance("0");
+    }
+  };
+
+  const sendBitsToken = async (toAddress, amountInBits, itemName) => {
+    if (!window.ethereum || !account) {
+      toast.error('Please connect your wallet first');
+      return false;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Convert amount to wei (assuming 18 decimals for BITS token)
+      const amountInWei = (amountInBits * Math.pow(10, 18)).toString();
+      const amountHex = '0x' + parseInt(amountInWei).toString(16);
+      
+      // Create transfer function call data
+      const transferData = '0xa9059cbb' + // transfer function selector
+        toAddress.slice(2).padStart(64, '0') + // to address (32 bytes)
+        amountHex.slice(2).padStart(64, '0'); // amount (32 bytes)
+
+      const transactionParameters = {
+        to: BITS_TOKEN_ADDRESS,
+        from: account,
+        data: transferData,
+        gas: '0x11170', // 70000 gas limit for ERC-20 transfer
+      };
+
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParameters],
+      });
+
+      toast.success(`Purchase successful! Transaction: ${txHash.slice(0, 10)}...`);
+      
+      // Refresh balance after successful transaction
+      setTimeout(() => getBitsBalance(account), 2000);
+      
+      return txHash;
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      if (error.code === 4001) {
+        toast.error('Transaction rejected by user');
+      } else if (error.message.includes('insufficient funds')) {
+        toast.error('Insufficient BITS balance');
+      } else {
+        toast.error('Transaction failed. Please try again.');
+      }
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Check if already connected
+    const checkConnection = async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const accounts = await window.ethereum.request({
+            method: 'eth_accounts'
+          });
+          if (accounts.length > 0) {
+            setAccount(accounts[0]);
+            setIsConnected(true);
+            await getBitsBalance(accounts[0]);
+          }
+        } catch (error) {
+          console.error('Error checking connection:', error);
+        }
+      }
+    };
+
+    checkConnection();
+
+    // Listen for account changes
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', async (accounts) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+          setIsConnected(true);
+          await getBitsBalance(accounts[0]);
+        } else {
+          setAccount(null);
+          setIsConnected(false);
+          setBitsBalance("0");
+        }
+      });
+
+      window.ethereum.on('chainChanged', () => {
+        window.location.reload();
+      });
+    }
+
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeAllListeners('accountsChanged');
+        window.ethereum.removeAllListeners('chainChanged');
+      }
+    };
+  }, []);
+
+  return {
+    account,
+    isConnected,
+    isLoading,
+    bitsBalance,
+    connectWallet,
+    disconnectWallet,
+    sendBitsToken,
+    getBitsBalance
+  };
+};
+
+// Enhanced Card Component with BITS Token Integration
 const ShopCard = ({ data, index }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const { account, isConnected, bitsBalance, connectWallet, sendBitsToken } = useWeb3();
+
+  const handlePurchase = async () => {
+    if (!isConnected) {
+      const connected = await connectWallet();
+      if (!connected) return;
+    }
+
+    const itemPrice = data?.itemPrice || 10;
+    const itemName = data?.itemName || "Red Sauce Pasta";
+    
+    // Check if user has enough BITS
+    if (parseFloat(bitsBalance) < itemPrice) {
+      toast.error(`Insufficient BITS balance. You need ${itemPrice} BITS but only have ${bitsBalance} BITS.`);
+      return;
+    }
+
+    setIsPurchasing(true);
+    
+    try {
+      const txHash = await sendBitsToken(SHOP_WALLET_ADDRESS, itemPrice, itemName);
+      
+      if (txHash) {
+        // Record the purchase in backend
+        try {
+          await axios.post('https://byteme-ue8b.onrender.com/shop/purchase', {
+            itemId: data?._id,
+            itemName: itemName,
+            price: itemPrice,
+            walletAddress: account,
+            transactionHash: txHash,
+            tokenAddress: BITS_TOKEN_ADDRESS
+          }, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("jwt")}`
+            }
+          });
+          
+          toast.success(`${itemName} purchased successfully with ${itemPrice} BITS!`);
+        } catch (apiError) {
+          console.error('Error recording purchase:', apiError);
+          toast.warning('Purchase completed but failed to record. Please contact support with transaction hash: ' + txHash);
+        }
+      }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      toast.error('Purchase failed. Please try again.');
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -86,7 +346,7 @@ const ShopCard = ({ data, index }) => {
           </div>
         </motion.div>
 
-        {/* Bestseller tag - more subtle */}
+        {/* Product tag */}
         <motion.div 
           className="absolute top-3 left-3 bg-gray-900 text-white text-xs px-2 py-1 rounded-md font-medium"
           initial={{ scale: 0, opacity: 0 }}
@@ -127,31 +387,118 @@ const ShopCard = ({ data, index }) => {
         
         <div className="flex justify-between items-center">
           <motion.div
-            className="flex items-center gap-2"
+            className="flex flex-col gap-1"
             whileHover={{ x: 2 }}
             transition={{ duration: 0.2 }}
           >
-            <Tag className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-900 font-medium">
-              {data?.itemPrice ? `${data.itemPrice} BITS` : "10 BITS"}
-            </span>
+            <div className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-900 font-medium">
+                {data?.itemPrice ? `${data.itemPrice} BITS` : "10 BITS"}
+              </span>
+            </div>
           </motion.div>
           
           <motion.button 
-            className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-800 transition-all duration-200 flex items-center gap-2"
-            whileHover={{ x: 2, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            onClick={handlePurchase}
+            disabled={isPurchasing}
+            className={`text-white text-sm px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 ${
+              isPurchasing 
+                ? "bg-gray-400 cursor-not-allowed" 
+                : "bg-gray-900 hover:bg-gray-800"
+            }`}
+            whileHover={!isPurchasing ? { x: 2, scale: 1.02 } : {}}
+            whileTap={!isPurchasing ? { scale: 0.98 } : {}}
           >
-            <span className="font-medium">Get</span>
-            <motion.div
-              animate={{ x: isHovered ? 2 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ShoppingBag className="w-4 h-4" />
-            </motion.div>
+            {isPurchasing ? (
+              <>
+                <motion.div
+                  className="w-3 h-3 border border-white border-t-transparent rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                />
+                <span className="font-medium">Buying...</span>
+              </>
+            ) : (
+              <>
+                <span className="font-medium">Buy Now</span>
+                <motion.div
+                  animate={{ x: isHovered ? 2 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Wallet className="w-4 h-4" />
+                </motion.div>
+              </>
+            )}
           </motion.button>
         </div>
       </motion.div>
+    </motion.div>
+  );
+};
+
+// Enhanced Wallet Connection Component with BITS Balance
+const WalletStatus = () => {
+  const { account, isConnected, isLoading, bitsBalance, connectWallet, disconnectWallet } = useWeb3();
+
+  return (
+    <motion.div
+      className="fixed top-20 right-6 z-50"
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 1, duration: 0.5 }}
+    >
+      {isConnected ? (
+        <motion.div
+          className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center gap-3"
+          whileHover={{ scale: 1.02 }}
+        >
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <div className="flex flex-col">
+            <span className="text-xs text-green-600 font-medium">Connected</span>
+            <span className="text-xs text-green-700 font-mono">
+              {account?.slice(0, 6)}...{account?.slice(-4)}
+            </span>
+            <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
+              <Wallet className="w-3 h-3" />
+              <span className="font-medium">{bitsBalance} BITS</span>
+            </div>
+          </div>
+          <motion.button
+            onClick={disconnectWallet}
+            className="text-green-600 hover:text-green-800 text-xs underline"
+            whileHover={{ scale: 1.05 }}
+          >
+            Disconnect
+          </motion.button>
+        </motion.div>
+      ) : (
+        <motion.button
+          onClick={connectWallet}
+          disabled={isLoading}
+          className={`bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all duration-200 ${
+            isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-800"
+          }`}
+          whileHover={!isLoading ? { scale: 1.02, y: -1 } : {}}
+          whileTap={!isLoading ? { scale: 0.98 } : {}}
+        >
+          {isLoading ? (
+            <>
+              <motion.div
+                className="w-4 h-4 border border-white border-t-transparent rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
+              <span>Connecting...</span>
+            </>
+          ) : (
+            <>
+              <Wallet className="w-4 h-4" />
+              <span>Connect Wallet</span>
+            </>
+          )}
+        </motion.button>
+      )}
     </motion.div>
   );
 };
@@ -213,7 +560,7 @@ const ShopPage = () => {
     <div className="w-full min-h-screen bg-white relative overflow-hidden">
       {/* Enhanced Background Elements - Made more visible */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Enhanced floating elements - More visible */}
+        {/* ...existing background animations... */}
         {Array.from({ length: 12 }, (_, i) => (
           <motion.div
             key={`float-${i}`}
@@ -237,7 +584,6 @@ const ShopPage = () => {
           />
         ))}
 
-        {/* Grid pattern elements - More visible */}
         {Array.from({ length: 8 }, (_, i) => (
           <motion.div
             key={`grid-${i}`}
@@ -260,7 +606,6 @@ const ShopPage = () => {
           />
         ))}
 
-        {/* Flowing lines - More visible */}
         {Array.from({ length: 6 }, (_, i) => (
           <motion.div
             key={`line-${i}`}
@@ -284,7 +629,6 @@ const ShopPage = () => {
           />
         ))}
 
-        {/* Morphing circles - More visible */}
         {Array.from({ length: 4 }, (_, i) => (
           <motion.div
             key={`circle-${i}`}
@@ -309,7 +653,6 @@ const ShopPage = () => {
           />
         ))}
 
-        {/* Wave effects - More visible */}
         {Array.from({ length: 8 }, (_, i) => (
           <motion.div
             key={`wave-${i}`}
@@ -332,7 +675,6 @@ const ShopPage = () => {
           />
         ))}
         
-        {/* Large geometric shapes - More visible */}
         <motion.div
           className="absolute top-20 right-16 w-40 h-40 border-2 border-gray-300/60 rounded-full"
           animate={{ 
@@ -359,7 +701,6 @@ const ShopPage = () => {
           }}
         />
 
-        {/* Diagonal lines - More visible */}
         <motion.div
           className="absolute top-1/4 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-400/40 to-transparent transform rotate-12"
           animate={{
@@ -387,7 +728,6 @@ const ShopPage = () => {
           }}
         />
 
-        {/* Particle system - More visible */}
         {Array.from({ length: 20 }, (_, i) => (
           <motion.div
             key={`particle-${i}`}
@@ -411,7 +751,6 @@ const ShopPage = () => {
           />
         ))}
 
-        {/* Pulse circles */}
         {Array.from({ length: 3 }, (_, i) => (
           <motion.div
             key={`pulse-${i}`}
@@ -435,7 +774,6 @@ const ShopPage = () => {
           />
         ))}
 
-        {/* Subtle gradient orbs - More visible */}
         <motion.div
           className="absolute top-1/3 left-1/4 w-80 h-80 bg-gradient-to-r from-gray-200/30 to-gray-300/30 rounded-full blur-3xl"
           animate={{
@@ -699,6 +1037,19 @@ const ShopPage = () => {
           )}
         </motion.div>
       </div>
+      
+      {/* Toast Container */}
+      <ToastContainer 
+        position="bottom-right" 
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 };
