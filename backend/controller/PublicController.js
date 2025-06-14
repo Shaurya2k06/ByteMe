@@ -34,7 +34,7 @@ async function signUp(req, res) {
         const token = jwt.sign(
             { userEmail: newUser.userEmail, userName: newUser.userName, role : newUser.role },
             JWT_KEY,
-            { expiresIn: '1d' }
+            { expiresIn: '28d' }
         );
 
         return res.status(201).json({message: "User SignUp Sucessful",
@@ -74,7 +74,7 @@ async function login(req, res) {
             role : userInDb.role,
         },
             JWT_KEY,
-            {expiresIn: "1d"}
+            {expiresIn: "28d"}
         );
         return res.status(200).json({
             message: 'Login successful',

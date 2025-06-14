@@ -35,7 +35,20 @@ const userSchema = new mongoose.Schema({
     feeStatus : {
         type : Boolean,
         default: false,
-    }
+    },
+    webauthn: {
+        credentialID: { type: String },
+        publicKey: { type: String },
+        counter: { type: Number, default: 0 },
+        deviceType: { type: String },
+        transports: [{ type: String }],
+    },
+    challenge: {
+        type: String
+    },
+    webauthnUserID: {
+        type: String,
+    },
 })
 
 const User = mongoose.model("User", userSchema);
