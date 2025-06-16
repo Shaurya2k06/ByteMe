@@ -12,6 +12,7 @@ import StudentDashboard from "./StudentDashboard.jsx";
 import QrPage from "./QrPage";
 import ScanQrPage from "./ScanPage.jsx";
 import About from "./About.jsx";
+import FingerprintTestPage from "./FingerprintTestPage";
 
 function App() {
   return (
@@ -26,6 +27,8 @@ function App() {
         <Route path="/generate-qr" element={<QrPage />} />
         <Route path="/scan" element={<ScanQrPage />} />
         <Route path="/about" element={<About />} />
+        <Route path="/fingerprint" element={<FingerprintTestPage />} />
+
         <Route path="/shop" element={<Shop />} />
       </Routes>
     </BrowserRouter>

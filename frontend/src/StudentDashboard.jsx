@@ -7,6 +7,12 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const StudentDashboard = () => {
   const { isConnected, account } = useMetaMask();
+  
+  // Update with your new deployed contract address
+  const BITS_CONTRACT_ADDRESS = "0xfEc060d0CF069ce6b1518445dB538058e9eE063d";
+  const ADMIN_ACCOUNT = "0x4f91bd1143168af7268eb08b017ec785c06c0e61";
+  const FEE_AMOUNT = "20000"; // 20,000 BITS
+
   const [walletAddress, setWalletAddress] = useState("");
   const [tokenAmount, setTokenAmount] = useState("");
   const [balance, setBalance] = useState("0");
@@ -39,11 +45,9 @@ const StudentDashboard = () => {
   const [sendingTokens, setSendingTokens] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
-
-  const BITS_CONTRACT_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
-  const ADMIN_ACCOUNT = "0x4f91bd1143168af7268eb08b017ec785c06c0e61";
-  const FEE_AMOUNT = "20000";
-  const ETHERSCAN_API_KEY = "YG3F5JK1XCCVGPHCRJGRBDTYXDR9WPUGUD";
+  const [autopayEnabled, setAutopayEnabled] = useState(false);
+  const [loadingAutopay, setLoadingAutopay] = useState(false);
+  const [checkingAutopay, setCheckingAutopay] = useState(false);
 
   // Function to get current month's due date (19th of current month)
   const getCurrentFeeDueDate = () => {
@@ -67,6 +71,7 @@ const StudentDashboard = () => {
     });
   };
 
+  // Complete BITS ABI with all autopay functions
   const BITS_ABI = [
     {
       "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
@@ -84,8 +89,286 @@ const StudentDashboard = () => {
       "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
       "stateMutability": "nonpayable",
       "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "collector", "type": "address"},
+        {"internalType": "uint256", "name": "amount", "type": "uint256"},
+        {"internalType": "uint256", "name": "interval", "type": "uint256"}
+      ],
+      "name": "enableAutopay",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "address", "name": "collector", "type": "address"}],
+      "name": "disableAutopay",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "payer", "type": "address"},
+        {"internalType": "address", "name": "collector", "type": "address"}
+      ],
+      "name": "getAutopaySubscription",
+      "outputs": [
+        {"internalType": "bool", "name": "isActive", "type": "bool"},
+        {"internalType": "uint256", "name": "amount", "type": "uint256"},
+        {"internalType": "uint256", "name": "lastPayment", "type": "uint256"},
+        {"internalType": "uint256", "name": "interval", "type": "uint256"},
+        {"internalType": "uint256", "name": "nextPaymentDue", "type": "uint256"}
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "payer", "type": "address"},
+        {"internalType": "address", "name": "collector", "type": "address"}
+      ],
+      "name": "isAutopayDue",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "payer", "type": "address"},
+        {"internalType": "address", "name": "collector", "type": "address"}
+      ],
+      "name": "executeAutopay",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {"indexed": true, "internalType": "address", "name": "from", "type": "address"},
+        {"indexed": true, "internalType": "address", "name": "to", "type": "address"},
+        {"indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}
+      ],
+      "name": "Transfer",
+      "type": "event"
     }
   ];
+
+  // Enable autopay function
+  const handleEnableAutopay = async () => {
+    console.log("🚀 Enable autopay clicked");
+    console.log("isConnected:", isConnected);
+    console.log("account:", account);
+    
+    if (!isConnected || !account) {
+      console.log("❌ Wallet not connected");
+      setError("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      setLoadingAutopay(true);
+      setError(null);
+      setSuccessMessage("");
+      
+      console.log("📝 Setting up autopay...");
+      console.log("Account:", account);
+      console.log("Admin:", ADMIN_ACCOUNT);
+      console.log("Contract:", BITS_CONTRACT_ADDRESS);
+      
+      // Check if window.ethereum exists
+      if (!window.ethereum) {
+        throw new Error("MetaMask not found");
+      }
+      
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(BITS_CONTRACT_ADDRESS, BITS_ABI, signer);
+
+      // Check contract exists
+      const code = await provider.getCode(BITS_CONTRACT_ADDRESS);
+      console.log("📋 Contract code exists:", code !== "0x");
+      
+      if (code === "0x") {
+        throw new Error("Contract not found at this address");
+      }
+
+      // 30 days in seconds
+      const monthlyInterval = 2592000;
+      const feeAmountWei = ethers.utils.parseUnits(FEE_AMOUNT, 18);
+
+      console.log("💰 Fee amount:", ethers.utils.formatEther(feeAmountWei), "BITS");
+      console.log("⏰ Interval:", monthlyInterval, "seconds");
+
+      // Check if admin is authorized collector
+      console.log("🔍 Checking if admin is authorized...");
+      const isAuthorized = await contract.authorizedCollectors(ADMIN_ACCOUNT);
+      console.log("✅ Admin authorized:", isAuthorized);
+      
+      if (!isAuthorized) {
+        throw new Error("Admin account is not an authorized collector. Please contact support.");
+      }
+
+      // Check user balance
+      console.log("💳 Checking user balance...");
+      const userBalance = await contract.balanceOf(account);
+      console.log("💳 User balance:", ethers.utils.formatEther(userBalance), "BITS");
+      
+      if (userBalance.lt(feeAmountWei)) {
+        throw new Error(`Insufficient BITS balance. You need at least ${FEE_AMOUNT} BITS to set up autopay.`);
+      }
+
+      // Check current autopay status
+      console.log("📊 Checking current autopay status...");
+      const currentSubscription = await contract.getAutopaySubscription(account, ADMIN_ACCOUNT);
+      console.log("📊 Current subscription:", currentSubscription);
+      
+      if (currentSubscription.isActive) {
+        console.log("⚠️ Autopay already enabled");
+        setAutopayEnabled(true);
+        setSuccessMessage('Autopay is already enabled for your account.');
+        return;
+      }
+
+      setSuccessMessage('🔄 Setting up autopay... Please confirm the transaction in MetaMask.');
+
+      console.log("📤 Calling enableAutopay...");
+      console.log("Parameters:", {
+        collector: ADMIN_ACCOUNT,
+        amount: feeAmountWei.toString(),
+        interval: monthlyInterval
+      });
+
+      // Estimate gas first
+      const gasEstimate = await contract.estimateGas.enableAutopay(
+        ADMIN_ACCOUNT, 
+        feeAmountWei, 
+        monthlyInterval
+      );
+      console.log("⛽ Gas estimate:", gasEstimate.toString());
+
+      const tx = await contract.enableAutopay(
+        ADMIN_ACCOUNT, 
+        feeAmountWei, 
+        monthlyInterval,
+        {
+          gasLimit: gasEstimate.mul(120).div(100) // Add 20% buffer
+        }
+      );
+      
+      console.log("📤 Transaction sent:", tx.hash);
+      setSuccessMessage('⏳ Transaction submitted. Waiting for confirmation...');
+      
+      const receipt = await tx.wait();
+      console.log("✅ Transaction confirmed:", receipt);
+      
+      // Verify the subscription was created
+      const newSubscription = await contract.getAutopaySubscription(account, ADMIN_ACCOUNT);
+      console.log("📊 New subscription:", newSubscription);
+      
+      setAutopayEnabled(true);
+      setSuccessMessage('🎉 Autopay enabled successfully! Your fees will be automatically deducted monthly.');
+      
+      setTimeout(() => setSuccessMessage(""), 5000);
+
+    } catch (err) {
+      console.error('❌ Enable autopay error:', err);
+      
+      let errorMessage = 'Failed to enable autopay';
+      
+      if (err.code === 4001) {
+        errorMessage = 'Transaction rejected by user';
+      } else if (err.code === -32603) {
+        errorMessage = 'Internal JSON-RPC error. Please try again.';
+      } else if (err.message.includes('Collector not authorized')) {
+        errorMessage = 'Admin account not authorized for autopay';
+      } else if (err.message.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds for gas fees';
+      } else if (err.message.includes('Insufficient BITS')) {
+        errorMessage = 'Insufficient BITS balance for autopay';
+      } else if (err.message.includes('Contract not found')) {
+        errorMessage = 'Smart contract not found. Please check the contract address.';
+      } else if (err.message.includes('MetaMask not found')) {
+        errorMessage = 'MetaMask not detected. Please install MetaMask.';
+      } else if (err.reason) {
+        errorMessage = `Contract error: ${err.reason}`;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      setTimeout(() => setError(""), 10000);
+    } finally {
+      setLoadingAutopay(false);
+    }
+  };
+
+  // Disable autopay function
+  const handleDisableAutopay = async () => {
+    if (!isConnected || !account) return;
+
+    try {
+      setLoadingAutopay(true);
+      setError(null);
+      
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(BITS_CONTRACT_ADDRESS, BITS_ABI, signer);
+
+      const tx = await contract.disableAutopay(ADMIN_ACCOUNT);
+      await tx.wait();
+      
+      setAutopayEnabled(false);
+      setSuccessMessage('Autopay disabled successfully.');
+      
+      setTimeout(() => setSuccessMessage(""), 3000);
+
+    } catch (err) {
+      console.error('Disable autopay error:', err);
+      setError('Failed to disable autopay');
+      setTimeout(() => setError(""), 3000);
+    } finally {
+      setLoadingAutopay(false);
+    }
+  };
+
+  // Check autopay status
+  const checkAutopayStatus = async () => {
+    if (!isConnected || !account) {
+      setAutopayEnabled(false);
+      return;
+    }
+
+    try {
+      setCheckingAutopay(true);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const contract = new ethers.Contract(BITS_CONTRACT_ADDRESS, BITS_ABI, provider);
+
+      console.log("🔍 Checking autopay status for:", account);
+      const subscription = await contract.getAutopaySubscription(account, ADMIN_ACCOUNT);
+      console.log("📊 Autopay subscription:", subscription);
+      
+      setAutopayEnabled(subscription.isActive);
+
+      // Also check if payment is due
+      if (subscription.isActive) {
+        const isDue = await contract.isAutopayDue(account, ADMIN_ACCOUNT);
+        console.log("⏰ Payment due:", isDue);
+        
+        if (isDue) {
+          setSuccessMessage("💡 Your autopay payment is due. It will be processed automatically.");
+        }
+      }
+
+    } catch (err) {
+      console.error("❌ Error checking autopay:", err);
+      setAutopayEnabled(false);
+    } finally {
+      setCheckingAutopay(false);
+    }
+  };
 
   // Function to fetch real transactions from Etherscan
   const fetchTransactions = async () => {
@@ -96,61 +379,59 @@ const StudentDashboard = () => {
 
     try {
       setLoadingTransactions(true);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       
-      // Fetch ERC-20 token transfers for the BITS token
-      const response = await fetch(
-        `https://api.etherscan.io/api?module=account&action=tokentx&contractaddress=${BITS_CONTRACT_ADDRESS}&address=${account}&page=1&offset=10&sort=desc&apikey=${ETHERSCAN_API_KEY}`
+      // Get the latest block number
+      const latestBlock = await provider.getBlockNumber();
+      const fromBlock = Math.max(0, latestBlock - 10000); // Last ~10k blocks
+      
+      // Create contract instance
+      const contract = new ethers.Contract(BITS_CONTRACT_ADDRESS, BITS_ABI, provider);
+      
+      // Get Transfer events where user is sender or receiver
+      const transferFilter = contract.filters.Transfer();
+      const events = await contract.queryFilter(transferFilter, fromBlock, latestBlock);
+      
+      // Filter events related to the current user
+      const userTransactions = events
+        .filter(event => 
+          event.args.from.toLowerCase() === account.toLowerCase() || 
+          event.args.to.toLowerCase() === account.toLowerCase()
+        )
+        .map(event => ({
+          hash: event.transactionHash,
+          from: event.args.from,
+          to: event.args.to,
+          value: ethers.utils.formatEther(event.args.value),
+          blockNumber: event.blockNumber,
+          timestamp: null // We'll fetch this below
+        }))
+        .slice(-10) // Get last 10 transactions
+        .reverse(); // Most recent first
+
+      // Get timestamps for each transaction
+      const transactionsWithTimestamp = await Promise.all(
+        userTransactions.map(async (tx) => {
+          try {
+            const block = await provider.getBlock(tx.blockNumber);
+            return {
+              ...tx,
+              timestamp: new Date(block.timestamp * 1000).toLocaleString()
+            };
+          } catch (error) {
+            console.error(`Error fetching block ${tx.blockNumber}:`, error);
+            return {
+              ...tx,
+              timestamp: 'Unknown'
+            };
+          }
+        })
       );
-      
-      const data = await response.json();
-      
-      if (data.status === '1' && data.result) {
-        const formattedTransactions = data.result.map((tx) => {
-          const isOutgoing = tx.from.toLowerCase() === account.toLowerCase();
-          const amount = ethers.utils.formatUnits(tx.value, 18);
-          const date = new Date(parseInt(tx.timeStamp) * 1000);
-          
-          return {
-            date: date.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-            }),
-            amount: parseFloat(amount).toLocaleString('en-US', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2
-            }),
-            to: isOutgoing ? tx.to : tx.from,
-            id: tx.hash,
-            type: isOutgoing ? "send" : "receive",
-            timestamp: parseInt(tx.timeStamp),
-            gasUsed: tx.gasUsed,
-            gasPrice: tx.gasPrice
-          };
-        });
-        
-        // Sort by timestamp (newest first)
-        formattedTransactions.sort((a, b) => b.timestamp - a.timestamp);
-        
-        setTransactions(formattedTransactions.slice(0, 5)); // Show only latest 5
-        
-        // Calculate total spent
-        const totalSent = formattedTransactions
-          .filter(tx => tx.type === "send")
-          .reduce((sum, tx) => sum + parseFloat(tx.amount.replace(/,/g, '')), 0);
-        
-        setTotalSpent(totalSent.toLocaleString('en-US', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2
-        }));
-        
-      } else {
-        console.log('No transactions found or API error:', data.message);
-        setTransactions([]);
-      }
-      
-    } catch (err) {
-      console.error('Error fetching transactions:', err);
+
+      setTransactions(transactionsWithTimestamp);
+
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
       setTransactions([]);
     } finally {
       setLoadingTransactions(false);
@@ -199,17 +480,252 @@ const StudentDashboard = () => {
     }
   };
 
+  // Add the missing calculateTotalSpent function
+  const calculateTotalSpent = async () => {
+    if (!isConnected || !account) {
+      setTotalSpent("0");
+      return;
+    }
+
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const contract = new ethers.Contract(BITS_CONTRACT_ADDRESS, BITS_ABI, provider);
+      
+      // Get the latest block number
+      const latestBlock = await provider.getBlockNumber();
+      const fromBlock = Math.max(0, latestBlock - 50000); // Look back ~50k blocks for more history
+      
+      // Get Transfer events where user is the sender (spending)
+      const transferFilter = contract.filters.Transfer(account, null); // From user to anyone
+      const events = await contract.queryFilter(transferFilter, fromBlock, latestBlock);
+      
+      console.log("📊 Found", events.length, "outgoing transactions");
+      
+      // Calculate total spent
+      let totalSpentWei = ethers.BigNumber.from(0);
+      
+      events.forEach(event => {
+        const amount = event.args.value;
+        totalSpentWei = totalSpentWei.add(amount);
+        console.log("💸 Spent:", ethers.utils.formatEther(amount), "BITS to", event.args.to);
+      });
+      
+      const totalSpentFormatted = ethers.utils.formatEther(totalSpentWei);
+      console.log("💰 Total spent:", totalSpentFormatted, "BITS");
+      
+      setTotalSpent(totalSpentFormatted);
+
+    } catch (error) {
+      console.error("Error calculating total spent:", error);
+      setTotalSpent("0");
+    }
+  };
+
+  // Update your existing useEffect to include calculateTotalSpent
   useEffect(() => {
     if (isConnected && account) {
       const timer = setTimeout(() => {
         fetchBalance();
-        fetchTransactions(); // Fetch transactions when wallet connects
+        fetchTransactions();
+        calculateTotalSpent(); // Add this line
+        checkAutopayStatus();
       }, 1000);
       return () => clearTimeout(timer);
     } else {
       setBalance("0");
       setTotalSpent("0");
       setTransactions([]);
+      setAutopayEnabled(false);
+    }
+  }, [isConnected, account]);
+
+  // Add a refresh function for manual updates
+  const refreshAllData = async () => {
+    if (!isConnected || !account) return;
+    
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchBalance(),
+        fetchTransactions(),
+        calculateTotalSpent(),
+        checkAutopayStatus()
+      ]);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update your Total Spent display section in the JSX:
+  // Find the Total Spent section and make sure it includes a refresh button:
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div className="flex items-center justify-between mb-2">
+      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <Wallet className="w-5 h-5 text-red-600" />
+        Total Spent
+      </h3>
+      <button
+        onClick={calculateTotalSpent}
+        disabled={loading}
+        className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+        title="Refresh total spent"
+      >
+        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+      </button>
+    </div>
+    <div className="text-3xl font-bold text-red-600 mb-1">
+      {loading ? (
+        <div className="flex items-center gap-2">
+          <motion.div
+            className="w-6 h-6 border-2 border-red-200 border-t-red-600 rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          Loading...
+        </div>
+      ) : (
+        `${parseFloat(totalSpent).toLocaleString()} BITS`
+      )}
+    </div>
+    <p className="text-sm text-gray-500">
+      Total tokens sent from your wallet
+    </p>
+    
+    {/* Optional: Show spending breakdown */}
+    {totalSpent !== "0" && !loading && (
+      <div className="mt-3 pt-3 border-t border-gray-100">
+        <p className="text-xs text-gray-400">
+          Includes all outgoing transfers from your wallet
+        </p>
+      </div>
+    )}
+  </div>
+
+  // Also, you can add a more detailed spending analysis function:
+  const getSpendingBreakdown = async () => {
+    if (!isConnected || !account) return;
+
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const contract = new ethers.Contract(BITS_CONTRACT_ADDRESS, BITS_ABI, provider);
+      
+      const latestBlock = await provider.getBlockNumber();
+      const fromBlock = Math.max(0, latestBlock - 50000);
+      
+      const transferFilter = contract.filters.Transfer(account, null);
+      const events = await contract.queryFilter(transferFilter, fromBlock, latestBlock);
+      
+      // Group spending by recipient
+      const spendingByRecipient = {};
+      let totalSpentWei = ethers.BigNumber.from(0);
+      
+      for (const event of events) {
+        const recipient = event.args.to;
+        const amount = event.args.value;
+        
+        totalSpentWei = totalSpentWei.add(amount);
+        
+        if (!spendingByRecipient[recipient]) {
+          spendingByRecipient[recipient] = {
+            address: recipient,
+            amount: ethers.BigNumber.from(0),
+            count: 0
+          };
+        }
+        
+        spendingByRecipient[recipient].amount = spendingByRecipient[recipient].amount.add(amount);
+        spendingByRecipient[recipient].count++;
+      }
+      
+      // Convert to array and sort by amount
+      const sortedSpending = Object.values(spendingByRecipient)
+        .map(item => ({
+          ...item,
+          amountFormatted: ethers.utils.formatEther(item.amount),
+          isAdmin: item.address.toLowerCase() === ADMIN_ACCOUNT.toLowerCase()
+        }))
+        .sort((a, b) => b.amount.sub(a.amount));
+      
+      console.log("📊 Spending breakdown:", sortedSpending);
+      console.log("💰 Total spent:", ethers.utils.formatEther(totalSpentWei), "BITS");
+      
+      return {
+        total: ethers.utils.formatEther(totalSpentWei),
+        breakdown: sortedSpending
+      };
+      
+    } catch (error) {
+      console.error("Error getting spending breakdown:", error);
+      return null;
+    }
+  };
+
+  // In your JSX, make sure the button looks exactly like this:
+  <motion.button
+    onClick={() => {
+      console.log("Button clicked!", { autopayEnabled, loadingAutopay, checkingAutopay });
+      if (autopayEnabled) {
+        handleDisableAutopay();
+      } else {
+        handleEnableAutopay();
+      }
+    }}
+    disabled={loadingAutopay || checkingAutopay}
+    className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+      autopayEnabled 
+        ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200' 
+        : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200'
+    }`}
+    whileHover={!loadingAutopay && !checkingAutopay ? { scale: 1.02 } : {}}
+    whileTap={!loadingAutopay && !checkingAutopay ? { scale: 0.98 } : {}}
+  >
+    {loadingAutopay ? (
+      <>
+        <motion.div
+          className="w-4 h-4 border-2 border-orange-400/30 border-t-orange-600 rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        />
+        {autopayEnabled ? 'Disabling...' : 'Setting up...'}
+      </>
+    ) : checkingAutopay ? (
+      <>
+        <motion.div
+          className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-600 rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        />
+        Checking autopay...
+      </>
+    ) : autopayEnabled ? (
+      <>
+        <CheckCircle className="w-4 h-4" />
+        Disable Autopay
+      </>
+    ) : (
+      <>
+        <Clock className="w-4 h-4" />
+        Set Up Autopay
+      </>
+    )}
+  </motion.button>
+
+  useEffect(() => {
+    if (isConnected && account) {
+      const timer = setTimeout(() => {
+        fetchBalance();
+        fetchTransactions(); // This should now work
+        calculateTotalSpent(); // Add this line
+        checkAutopayStatus();
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setBalance("0");
+      setTotalSpent("0");
+      setTransactions([]);
+      setAutopayEnabled(false);
     }
   }, [isConnected, account]);
 
@@ -928,53 +1444,50 @@ const StudentDashboard = () => {
                 <p className="text-xs text-gray-400 mt-1">Make your first transaction to see it here</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-sm font-medium text-gray-500 border-b border-gray-200">
-                      <th className="pb-3">Date</th>
-                      <th className="pb-3">Amount</th>
-                      <th className="pb-3">To/From</th>
-                      <th className="pb-3">Transaction ID</th>
-                      <th className="pb-3">Type</th>
-                    </tr>
-                  </thead>
-                  <tbody className="space-y-2">
-                    {transactions.map((txn, idx) => (
-                      <motion.tr
-                        key={idx}
-                        className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer"
-                        whileHover={{ scale: 1.01 }}
-                        transition={{ duration: 0.1 }}
-                        onClick={() => openTransactionOnEtherscan(txn.id)}
+              <div className="space-y-3">
+                {transactions.map((tx, index) => (
+                  <motion.div
+                    key={tx.hash}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        tx.from.toLowerCase() === account?.toLowerCase() ? 'bg-red-400' : 'bg-green-400'
+                      }`} />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {tx.from.toLowerCase() === account?.toLowerCase() ? 'Sent' : 'Received'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {tx.from.toLowerCase() === account?.toLowerCase() 
+                            ? `To: ${tx.to.slice(0, 6)}...${tx.to.slice(-4)}`
+                            : `From: ${tx.from.slice(0, 6)}...${tx.from.slice(-4)}`
+                          }
+                        </p>
+                        <p className="text-xs text-gray-400">{tx.timestamp}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-sm font-medium ${
+                        tx.from.toLowerCase() === account?.toLowerCase() ? 'text-red-600' : 'text-green-600'
+                      }`}>
+                        {tx.from.toLowerCase() === account?.toLowerCase() ? '-' : '+'}
+                        {parseFloat(tx.value).toLocaleString()} BITS
+                      </p>
+                      <a
+                        href={`https://etherscan.io/tx/${tx.hash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                       >
-                        <td className="py-4 text-sm text-gray-900">{txn.date}</td>
-                        <td className="py-4">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {txn.amount} BITS
-                          </span>
-                        </td>
-                        <td className="py-4 text-sm text-gray-600 font-mono">
-                          {txn.to.slice(0, 6)}...{txn.to.slice(-4)}
-                        </td>
-                        <td className="py-4 text-sm text-gray-600 font-mono">
-                          {txn.id.slice(0, 6)}...{txn.id.slice(-4)}
-                        </td>
-                        <td className="py-4">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              txn.type === "send"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-green-100 text-green-700"
-                            }`}
-                          >
-                            {txn.type === "send" ? "Sent" : "Received"}
-                          </span>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
+                        View <Eye className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             )}
           </motion.div>

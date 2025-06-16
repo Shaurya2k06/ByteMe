@@ -57,7 +57,7 @@ const AdminBalance = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const BITS_CONTRACT_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC"; 
+  const BITS_CONTRACT_ADDRESS = "0xfEc060d0CF069ce6b1518445dB538058e9eE063d"; 
   
   const BITS_ABI = [
     {
@@ -243,7 +243,7 @@ const TotalTransactions = () => {
   const [percentageChange, setPercentageChange] = useState(0);
 
   // Temporarily hardcode the values
-  const TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+  const TOKEN_ADDRESS = "0xfEc060d0CF069ce6b1518445dB538058e9eE063d";
   const ETHERSCAN_API_KEY = "YG3F5JK1XCCVGPHCRJGRBDTYXDR9WPUGUD";
 
   useEffect(() => {
@@ -398,7 +398,7 @@ const CoinFlow = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const TOKEN_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+  const TOKEN_ADDRESS = "0xfEc060d0CF069ce6b1518445dB538058e9eE063d";
   const ETHERSCAN_API_KEY = "YG3F5JK1XCCVGPHCRJGRBDTYXDR9WPUGUD";
 
   const formatAmount = (value, decimals = 18) => {
@@ -643,7 +643,7 @@ const SendTokens = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const BITS_CONTRACT_ADDRESS = "0xEE43baf1A0D54439B684150ec377Bb6d7D58c4bC";
+  const BITS_CONTRACT_ADDRESS = "0xfEc060d0CF069ce6b1518445dB538058e9eE063d";
   
   const BITS_ABI = [
     {
