@@ -13,7 +13,7 @@ export function ConnectButton() {
   const [hasAssignedWallet, setHasAssignedWallet] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Function to assign wallet address to user account
+
   const assignWalletToUser = async (walletAddress) => {
     try {
       setIsAssigningWallet(true);
@@ -56,7 +56,6 @@ export function ConnectButton() {
     }
   };
 
-  // Watch for account changes and assign wallet automatically
   useEffect(() => {
     const assignWalletOnConnection = async () => {
       if (isConnected && account && !hasAssignedWallet && !isAssigningWallet) {
@@ -118,7 +117,6 @@ export function ConnectButton() {
     }
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -153,7 +151,7 @@ export function ConnectButton() {
         whileHover={{ y: -1 }}
         whileTap={{ scale: 0.98 }}
       >
-        {/* Animated background gradient for non-connected state */}
+
         {!isConnected && (
           <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-xl"></div>
         )}
