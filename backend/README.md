@@ -115,6 +115,7 @@ All endpoints return standardized JSON responses:
 
 Configured for:
 - https://www.uni-byte.tech (production)
+
 - http://localhost:5173 (development)
 
 Built by Team ByteMe
