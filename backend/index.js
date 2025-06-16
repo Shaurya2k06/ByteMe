@@ -7,6 +7,7 @@ const EventRouter = require('./routes/EventRouter')
 const ShopRouter = require('./routes/ShopRouter')
 const PaymentRouter = require('./routes/PaymentRouter')
 const QrRouter = require('./routes/QrRouter')
+// const BiometricRouter = require('./routes/BiometricRouter')
 const { jsonParser } = require('./middlewares/index')
 
 const mongoURI = process.env.MONGO_URI;
@@ -34,6 +35,8 @@ app.use("/shop", ShopRouter)
 app.use("/fee", PaymentRouter)
 
 app.use("/qr", QrRouter)
+
+// app.use("/biometric", BiometricRouter)
 
 
 app.listen(PORT, () => console.log("Server has been started on Port :" + PORT));

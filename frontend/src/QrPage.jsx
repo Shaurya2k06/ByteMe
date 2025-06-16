@@ -51,7 +51,7 @@ const QrPage = () => {
     return (
         <div style={styles.page}>
             <div style={styles.card}>
-                <h2 style={styles.title}>Your QR Code</h2>
+                <h2 style={styles.title}>🔐 Secure QR Payment</h2>
 
                 {token ? (
                     <>
@@ -59,19 +59,19 @@ const QrPage = () => {
                             <QRCode value={token} size={220} />
                         </div>
                         <p style={styles.tokenInfo}>
-                            Token valid for 30 days. Scan this to pay securely.
+                            Your QR code is valid for <strong>30 days</strong>. Scan it to make a payment securely.
                         </p>
                         <div style={styles.actions}>
-                            <button onClick={handlePrint} style={styles.printButton}>
+                            <button onClick={handlePrint} style={{ ...styles.button, ...styles.printButton }}>
                                 🖨️ Print QR
                             </button>
-                            <button onClick={() => navigate("/pay")} style={styles.payButton}>
+                            <button onClick={() => navigate("/pay")} style={{ ...styles.button, ...styles.payButton }}>
                                 💳 Go to Pay
                             </button>
                         </div>
                     </>
                 ) : (
-                    <p style={styles.loading}>Loading QR code...</p>
+                    <p style={styles.loading}>⏳ Generating your QR code...</p>
                 )}
             </div>
         </div>
@@ -84,67 +84,67 @@ const styles = {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        backgroundColor: "#f0f2f5",
+        background: "linear-gradient(135deg, #f0f2f5, #d6e4f0)",
         padding: "20px",
+        fontFamily: "'Segoe UI', sans-serif",
     },
     card: {
-        backgroundColor: "#fff",
+        background: "rgba(255, 255, 255, 0.9)",
+        backdropFilter: "blur(10px)",
         padding: "40px 30px",
-        borderRadius: "16px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        borderRadius: "20px",
+        boxShadow: "0 12px 24px rgba(0,0,0,0.1)",
         textAlign: "center",
-        maxWidth: "400px",
+        maxWidth: "420px",
         width: "100%",
-        animation: "fadeIn 0.5s ease-in-out",
+        transition: "transform 0.3s ease",
     },
     title: {
         marginBottom: "24px",
-        color: "#333",
-        fontSize: "24px",
+        color: "#222",
+        fontSize: "28px",
+        fontWeight: "600",
     },
     qrWrapper: {
-        padding: "16px",
-        backgroundColor: "#fafafa",
+        padding: "20px",
+        backgroundColor: "#fff",
         borderRadius: "12px",
         display: "inline-block",
-        boxShadow: "inset 0 0 8px rgba(0,0,0,0.05)",
-        transition: "transform 0.3s ease-in-out",
+        boxShadow: "0 6px 12px rgba(0,0,0,0.05)",
     },
     tokenInfo: {
-        marginTop: "12px",
-        fontSize: "14px",
-        color: "#666",
+        marginTop: "18px",
+        fontSize: "15px",
+        color: "#555",
+        lineHeight: "1.6",
     },
     loading: {
         fontSize: "16px",
-        color: "#999",
+        color: "#888",
     },
     actions: {
-        marginTop: "24px",
+        marginTop: "30px",
         display: "flex",
         justifyContent: "center",
         gap: "16px",
         flexWrap: "wrap",
     },
-    printButton: {
-        padding: "10px 20px",
-        fontSize: "16px",
-        borderRadius: "8px",
-        backgroundColor: "#4CAF50",
-        color: "white",
+    button: {
+        padding: "12px 22px",
+        fontSize: "15px",
+        borderRadius: "10px",
         border: "none",
         cursor: "pointer",
-        transition: "background 0.3s",
+        fontWeight: "500",
+        transition: "all 0.3s ease",
+    },
+    printButton: {
+        backgroundColor: "#28a745",
+        color: "#fff",
     },
     payButton: {
-        padding: "10px 20px",
-        fontSize: "16px",
-        borderRadius: "8px",
         backgroundColor: "#007bff",
-        color: "white",
-        border: "none",
-        cursor: "pointer",
-        transition: "background 0.3s",
+        color: "#fff",
     },
 };
 
