@@ -8,7 +8,8 @@ const ShopRouter = require('./routes/ShopRouter')
 const PaymentRouter = require('./routes/PaymentRouter')
 const QrRouter = require('./routes/QrRouter')
 // const BiometricRouter = require('./routes/BiometricRouter')
-const { jsonParser } = require('./middlewares/index')
+const { jsonParser } = require('./middlewares/index');
+const { verifyUserAuth } = require('./Service/authService');
 
 const mongoURI = process.env.MONGO_URI;
 
@@ -35,6 +36,7 @@ app.use("/shop", ShopRouter)
 app.use("/fee", PaymentRouter)
 
 app.use("/qr", QrRouter)
+
 
 // app.use("/biometric", BiometricRouter)
 

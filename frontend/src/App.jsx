@@ -13,24 +13,29 @@ import QrPage from "./QrPage";
 import ScanQrPage from "./ScanPage.jsx";
 import About from "./About.jsx";
 import FingerprintTestPage from "./FingerprintTestPage";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import ProtectedRoutes from "./context/ProtectedRoutes.jsx";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/events" element={<Events />} />
-        <Route path="/studentDashboard" element={<StudentDashboard />} />
-        <Route path="/generate-qr" element={<QrPage />} />
-        <Route path="/scan" element={<ScanQrPage />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/fingerprint" element={<FingerprintTestPage />} />
-
-        <Route path="/shop" element={<Shop />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Signup />} />
+          <Route element={<ProtectedRoutes />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/studentDashboard" element={<StudentDashboard />} />
+            <Route path="/generate-qr" element={<QrPage />} />
+            <Route path="/scan" element={<ScanQrPage />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/fingerprint" element={<FingerprintTestPage />} />
+            <Route path="/shop" element={<Shop />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
