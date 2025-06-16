@@ -3,13 +3,72 @@ import { useMetaMask } from "../hooks/useMetamask";
 import { Check, Copy, LogOut, Wallet, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 
 export function ConnectButton() {
   const { isConnected, account, connect, disconnect } = useMetaMask();
   const [showDropdown, setShowDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);  const [isAssigningWallet, setIsAssigningWallet] = useState(false);
+  const [hasAssignedWallet, setHasAssignedWallet] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Function to assign wallet address to user account
+  const assignWalletToUser = async (walletAddress) => {
+    try {
+      setIsAssigningWallet(true);
+      const token = localStorage.getItem("jwt");
+      
+      if (!token) {
+        toast.error("Please log in to assign wallet address");
+        return false;
+      }
+
+      const response = await axios.patch(
+        "http://localhost:3000/user/updateWallet",
+        { address: walletAddress },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (response.status === 200) {
+        toast.success("Wallet address assigned to your account!");
+        setHasAssignedWallet(true);
+        return true;
+      }
+    } catch (error) {
+      console.error("Error assigning wallet:", error);
+      
+      if (error.response?.status === 404) {
+        toast.error("Please log in to assign wallet address");
+      } else if (error.response?.status === 400) {
+        toast.error("Invalid wallet address");
+      } else {
+        toast.error("Failed to assign wallet address. Please try again.");
+      }
+      return false;
+    } finally {
+      setIsAssigningWallet(false);
+    }
+  };
+
+  // Watch for account changes and assign wallet automatically
+  useEffect(() => {
+    const assignWalletOnConnection = async () => {
+      if (isConnected && account && !hasAssignedWallet && !isAssigningWallet) {
+        const token = localStorage.getItem("jwt");
+        if (token) {
+          await assignWalletToUser(account);
+        }
+      }
+    };
+
+    assignWalletOnConnection();
+  }, [isConnected, account, hasAssignedWallet, isAssigningWallet]);
 
   const formatAddress = (address) => {
     return `${address.substring(0, 6)}...${address.substring(
@@ -24,9 +83,7 @@ export function ConnectButton() {
       toast.success("Address copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     }
-  };
-
-  const handleClick = async () => {
+  };  const handleClick = async () => {
     if (isConnected) {
       setShowDropdown(!showDropdown);
     } else {
@@ -36,7 +93,7 @@ export function ConnectButton() {
         toast.success("Wallet connected successfully!");
         setTimeout(() => {
           window.location.reload();
-        }, 500);
+        }, 1500); // Give more time for wallet assignment
       } catch (error) {
         console.error("Connection error:", error);
         toast.error("Failed to connect wallet");
@@ -100,9 +157,8 @@ export function ConnectButton() {
         {!isConnected && (
           <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-xl"></div>
         )}
-        
-        {/* Loading spinner */}
-        {isLoading && (
+          {/* Loading spinner */}
+        {(isLoading || isAssigningWallet) && (
           <div className="absolute inset-0 flex items-center justify-center bg-blue-600/90 rounded-xl">
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
@@ -113,9 +169,13 @@ export function ConnectButton() {
           <div className={`p-1 rounded-lg ${isConnected ? 'bg-gray-100' : 'bg-white/20'}`}>
             <Wallet className="w-4 h-4" />
           </div>
-          
-          <span className="font-medium text-sm lg:text-base truncate">
-            {isConnected ? formatAddress(account) : "Connect Wallet"}
+            <span className="font-medium text-sm lg:text-base truncate">
+            {isAssigningWallet 
+              ? "Assigning Wallet..." 
+              : isConnected 
+                ? formatAddress(account) 
+                : "Connect Wallet"
+            }
           </span>
           
           {isConnected && (
@@ -178,9 +238,29 @@ export function ConnectButton() {
                     <Check className="w-3.5 h-3.5 text-green-600" />
                   ) : (
                     <Copy className="w-3.5 h-3.5 text-gray-600 group-hover:text-blue-600" />
-                  )}
-                </motion.button>
+                  )}                </motion.button>
               </motion.div>
+
+              {/* Manual assign wallet button */}
+              <motion.button
+                className="w-full flex items-center justify-center gap-2 p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium transition-all duration-200 group text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => assignWalletToUser(account)}
+                disabled={isAssigningWallet}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                {isAssigningWallet ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Assigning...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                    <span>Assign to Account</span>
+                  </>
+                )}
+              </motion.button>
 
               {/* Disconnect button */}
               <motion.button
