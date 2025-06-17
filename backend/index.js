@@ -37,7 +37,15 @@ app.use("/fee", PaymentRouter)
 
 app.use("/qr", QrRouter)
 
+<<<<<<< Updated upstream
 
+=======
+let i = 0;
+app.use("/api/ping", (req, res) => {
+    console.log(i++)
+    return res.status(200).json({message: "huhh???"})
+})
+>>>>>>> Stashed changes
 // app.use("/biometric", BiometricRouter)
 
 

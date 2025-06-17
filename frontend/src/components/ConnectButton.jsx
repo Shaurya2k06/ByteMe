@@ -18,14 +18,14 @@ export function ConnectButton() {
     try {
       setIsAssigningWallet(true);
       const token = localStorage.getItem("jwt");
-      
+
       if (!token) {
         toast.error("Please log in to assign wallet address");
         return false;
       }
 
       const response = await axios.patch(
-        "http://localhost:3000/user/updateWallet",
+        "http://localhost:9092/user/updateWallet",
         { address: walletAddress },
         {
           headers: {
@@ -42,7 +42,7 @@ export function ConnectButton() {
       }
     } catch (error) {
       console.error("Error assigning wallet:", error);
-      
+
       if (error.response?.status === 404) {
         toast.error("Please log in to assign wallet address");
       } else if (error.response?.status === 400) {
@@ -56,12 +56,23 @@ export function ConnectButton() {
     }
   };
 
+  const attemptedWallets = useRef(new Set());
+
   useEffect(() => {
     const assignWalletOnConnection = async () => {
-      if (isConnected && account && !hasAssignedWallet && !isAssigningWallet) {
+      if (
+          isConnected &&
+          account &&
+          !hasAssignedWallet &&
+          !isAssigningWallet &&
+          !attemptedWallets.current.has(account) // Prevent repeat attempts
+      ) {
         const token = localStorage.getItem("jwt");
         if (token) {
-          await assignWalletToUser(account);
+          const success = await assignWalletToUser(account);
+          if (!success) {
+            attemptedWallets.current.add(account); // Add to blacklist on failure
+          }
         }
       }
     };
@@ -168,19 +179,19 @@ export function ConnectButton() {
             <Wallet className="w-4 h-4" />
           </div>
             <span className="font-medium text-sm lg:text-base truncate">
-            {isAssigningWallet 
-              ? "Assigning Wallet..." 
-              : isConnected 
-                ? formatAddress(account) 
+            {isAssigningWallet
+              ? "Assigning Wallet..."
+              : isConnected
+                ? formatAddress(account)
                 : "Connect Wallet"
             }
           </span>
-          
+
           {isConnected && (
-            <ChevronDown 
+            <ChevronDown
               className={`w-3.5 h-3.5 transition-transform duration-200 ${
                 showDropdown ? 'rotate-180' : ''
-              }`} 
+              }`}
             />
           )}
         </div>
@@ -227,7 +238,7 @@ export function ConnectButton() {
                   <p className="text-xs font-medium text-gray-900 mb-0.5">Wallet Address</p>
                   <p className="text-xs text-gray-600 font-mono truncate">{account}</p>
                 </div>
-                <motion.button 
+                <motion.button
                   className="ml-2 p-1.5 rounded-md hover:bg-gray-200 transition-colors"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}

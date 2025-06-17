@@ -107,6 +107,7 @@ async function getAllStudents(req, res) {
 }
 
 async function setUserWallet(req, res) {
+    console.log("abstract")
     try {
         const user = await verifyUserAuth(req);
         if (!user) return res.status(404).json({ message: 'Log-in to connect wallet' });
@@ -115,7 +116,11 @@ async function setUserWallet(req, res) {
         if (!address) {
             return res.status(400).json({ message: 'Wallet address is required' });
         }
-
+        const existingUser = await User.findOne({ walletAddress: address, _id: { $ne: userId } });
+        if (existingUser) {
+            console.log('Wallet address already linked to another user')
+            return res.status(409).json({ message: 'Wallet address already linked to another user' });
+        }
         await User.findByIdAndUpdate(userId, { walletAddress: address });
         return res.status(200).json({ message: 'Wallet connected successfully' });
     }  catch (error) {
