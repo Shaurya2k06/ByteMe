@@ -24,13 +24,13 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
+          <Route path="/about" element={<About />} />
           <Route element={<ProtectedRoutes />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/events" element={<Events />} />
             <Route path="/studentDashboard" element={<StudentDashboard />} />
             <Route path="/generate-qr" element={<QrPage />} />
             <Route path="/scan" element={<ScanQrPage />} />
-            <Route path="/about" element={<About />} />
             <Route path="/fingerprint" element={<FingerprintTestPage />} />
             <Route path="/shop" element={<Shop />} />
           </Route>
