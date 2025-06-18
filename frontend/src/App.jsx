@@ -15,7 +15,7 @@ import About from "./About.jsx";
 import FingerprintTestPage from "./FingerprintTestPage";
 import ProtectedRoutes from "./context/ProtectedRoutes.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
-
+import PaymentPage from "./PaymentPage.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -31,7 +31,7 @@ function App() {
             <Route path="/studentDashboard" element={<StudentDashboard />} />
             <Route path="/generate-qr" element={<QrPage />} />
             <Route path="/scan" element={<ScanQrPage />} />
-
+            <Route path="/payment" element={<PaymentPage />} />
             <Route path="/fingerprint" element={<FingerprintTestPage />} />
 
             <Route path="/shop" element={<Shop />} />
