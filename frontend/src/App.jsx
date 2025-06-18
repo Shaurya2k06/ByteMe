@@ -26,7 +26,7 @@ function App() {
           <Route path="/register" element={<Signup />} />
           <Route path="/about" element={<About />} />
           <Route element={<ProtectedRoutes />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
             <Route path="/events" element={<Events />} />
             <Route path="/studentDashboard" element={<StudentDashboard />} />
             <Route path="/generate-qr" element={<QrPage />} />
