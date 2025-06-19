@@ -23,7 +23,7 @@ const QrPage = () => {
             }
 
             try {
-                const response = await axios.get("http://localhost:9092/qr/createQR", {
+                const response = await axios.get("https://byteme-ue8b.onrender.com/qr/createQR", {
                     headers: { Authorization: `Bearer ${jwt}` },
                 });
 
@@ -49,7 +49,7 @@ const QrPage = () => {
     };
     const handleGenerateNewQR = async () => {
         try {
-            const response = await axios.get("http://localhost:9092/qr/createQR", {
+            const response = await axios.get("https://byteme-ue8b.onrender.com/qr/createQR", {
                 headers: { Authorization: `Bearer ${jwt}` },
             });
 

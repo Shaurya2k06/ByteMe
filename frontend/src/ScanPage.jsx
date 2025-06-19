@@ -14,7 +14,7 @@ const ScanPage = () => {
 
         try {
             const res = await axios.post(
-                "http://localhost:9092/qr/verifyQR",
+                "https://byteme-ue8b.onrender.com/qr/verifyQR",
                 { token },
                 {
                     headers: {
@@ -24,7 +24,12 @@ const ScanPage = () => {
             );
             console.log("Backend response:", res.data);
             setScanStatus("✅ Verified! Redirecting...");
-            setTimeout(() => navigate("/pay"), 1000);
+            setTimeout(() => navigate("/payment", {
+                state: {
+                    receiverWalletAddress: res.data.receiverWalletAddress,
+                    receiverUserName: res.data.receiverUserName,
+                }
+            }), 1000);
         } catch (err) {
             console.error("Failed to send token:", err);
             setScanStatus("❌ Invalid QR code. Please try again.");
