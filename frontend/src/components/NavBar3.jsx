@@ -47,11 +47,20 @@ function NavBar3() {
     navigate("/login");
   };
 
-  const navLinks = [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Shop", href: "/shop" },
-    { name: "Events", href: "/events" },
-  ];
+  let navLinks
+  if(localStorage.getItem("role") === "user") {
+    navLinks = [
+      { name: "Dashboard", href: "/studentDashboard" },
+      { name: "Shop", href: "/shop" },
+      { name: "Events", href: "/events" },
+    ];
+  } else {
+    navLinks = [
+      {name: "Dashboard", href: "/dashboard"},
+      {name: "Shop", href: "/shop"},
+      {name: "Events", href: "/events"},
+    ];
+  }
 
   return (
     <motion.header 

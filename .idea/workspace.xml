@@ -6,9 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="b3e83102-10b3-471f-b523-a19577eea04d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/PaymentPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/PaymentPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/QrPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/QrPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/ScanPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/ScanPage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/Signup.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/Signup.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/NavBar1.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/NavBar1.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/NavBar3.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/NavBar3.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -126,7 +126,7 @@
       <workItem from="1748798230327" duration="20475000" />
       <workItem from="1748901040174" duration="75453000" />
       <workItem from="1749208793422" duration="672000" />
-      <workItem from="1750345164607" duration="3958000" />
+      <workItem from="1750345164607" duration="6885000" />
     </task>
     <servers />
   </component>

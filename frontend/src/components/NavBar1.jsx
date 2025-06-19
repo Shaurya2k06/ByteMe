@@ -116,7 +116,15 @@ function NavBar1() {
               {isLoggedIn && userName ? (
                 <div
                   className="group relative"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => {
+                    const role = localStorage.getItem("role");
+                    if (role === "user") {
+                      navigate("/studentDashboard");
+                    } else {
+                      navigate("/dashboard");
+                    }
+                    setMenuOpen(false);
+                  }}
                 >
                   <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-lg">
                     {userName[0].toUpperCase()}
