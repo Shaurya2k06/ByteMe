@@ -14,18 +14,18 @@ import ScanQrPage from "./ScanPage.jsx";
 import About from "./About.jsx";
 import FingerprintTestPage from "./FingerprintTestPage";
 import ProtectedRoutes from "./context/ProtectedRoutes.jsx";
-import { AuthProvider } from "./context/AuthContext.jsx";
+// import { AuthProvider } from "./context/AuthContext.jsx";
 import PaymentPage from "./PaymentPage.jsx";
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      {/*<AuthProvider>*/}
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
           <Route path="/about" element={<About />} />
-          <Route element={<ProtectedRoutes />}>
+          {/*<Route element={<ProtectedRoutes />}>*/}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/events" element={<Events />} />
             <Route path="/studentDashboard" element={<StudentDashboard />} />
@@ -35,9 +35,9 @@ function App() {
             <Route path="/fingerprint" element={<FingerprintTestPage />} />
 
             <Route path="/shop" element={<Shop />} />
-          </Route>
+          {/*</Route>*/}
         </Routes>
-      </AuthProvider>
+      {/*</AuthProvider>*/}
     </BrowserRouter>
   );
 }
