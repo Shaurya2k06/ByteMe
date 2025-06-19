@@ -47,6 +47,20 @@ const QrPage = () => {
         printWindow.document.close();
         printWindow.print();
     };
+    const handleGenerateNewQR = async () => {
+        try {
+            const response = await axios.get("http://localhost:9092/qr/createQR", {
+                headers: { Authorization: `Bearer ${jwt}` },
+            });
+
+            const newToken = response.data.qrToken;
+            setToken(newToken);
+            localStorage.setItem("qrToken", newToken);
+            localStorage.setItem("qrTokenTimestamp", Date.now().toString());
+        } catch (error) {
+            console.error("Error generating new QR:", error);
+        }
+    };
 
     return (
         <div style={styles.page}>
@@ -62,11 +76,15 @@ const QrPage = () => {
                             Your QR code is valid for <strong>30 days</strong>. Scan it to make a payment securely.
                         </p>
                         <div style={styles.actions}>
-                            <button onClick={handlePrint} style={{ ...styles.button, ...styles.printButton }}>
+                            <button onClick={handlePrint} style={{...styles.button, ...styles.printButton}}>
                                 🖨️ Print QR
                             </button>
-                            <button onClick={() => navigate("/pay")} style={{ ...styles.button, ...styles.payButton }}>
+                            <button onClick={() => navigate("/pay")} style={{...styles.button, ...styles.payButton}}>
                                 💳 Go to Pay
+                            </button>
+                            <button onClick={handleGenerateNewQR}
+                                    style={{...styles.button, backgroundColor: "#ffc107", color: "#000"}}>
+                                🔄 Generate New QR
                             </button>
                         </div>
                     </>
