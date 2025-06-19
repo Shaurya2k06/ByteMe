@@ -9,7 +9,7 @@ function Signup() {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role] = useState("User");
+  const [role] = useState("user");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
