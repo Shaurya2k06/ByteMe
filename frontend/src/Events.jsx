@@ -244,7 +244,7 @@ function Events() {
     const fetchEvents = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get("http://localhost:9092/events/getAllEvents", {
+        const response = await axios.get("https://byteme-ue8b.onrender.com/events/getAllEvents", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("jwt")}`,
           },
@@ -985,7 +985,7 @@ function EventCard({ event, index, registeredEvents, setRegisteredEvents }) {
         // Then register with the backend
         try {
           await axios.post(
-            "http://localhost:9092/events/joinEvent",
+            "https://byteme-ue8b.onrender.com/events/joinEvent",
             { 
               eventId: event.id,
               transactionHash: txHash,

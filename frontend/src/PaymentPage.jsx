@@ -9,9 +9,16 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
+import { useLocation } from "react-router";
+
 
 function PaymentPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const receiverWalletAddress = location.state?.receiverWalletAddress || "";
+  const receiverUserName = location.state?.receiverUserName || "";
+
 
   function handleQrClick() {
     navigate("/generate-qr");
@@ -93,13 +100,14 @@ function PaymentPage() {
                   </label>
                   <div className="relative w-full">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      <NotebookTabs size={20} />
+                      <NotebookTabs size={20}/>
                     </span>
                     <input
-                      type="text"
-                      name="address"
-                      placeholder="Enter wallet address"
-                      className="rounded-md bg-[#0000000D] placeholder:italic outline-none w-full pl-10 py-2"
+                        type="text"
+                        name="address"
+                        placeholder="Enter wallet address"
+                        defaultValue={receiverWalletAddress}
+                        className="rounded-md bg-[#0000000D] placeholder:italic outline-none w-full pl-10 py-2"
                     />
                   </div>
                 </div>
@@ -107,7 +115,7 @@ function PaymentPage() {
                 {/* Token Amount */}
                 <div className="flex flex-col gap-2">
                   <label
-                    className="text-xl sm:text-2xl font-semibold text-[#666666]"
+                      className="text-xl sm:text-2xl font-semibold text-[#666666]"
                     htmlFor="amount"
                   >
                     Token Amount
